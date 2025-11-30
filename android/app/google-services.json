@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "918694146633",
+    "project_id": "ciloka-app",
+    "storage_bucket": "ciloka-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918694146633:android:168361fab35bdbbd824598",
+        "android_client_info": {
+          "package_name": "com.example.ciloka_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "918694146633-q073hdtlafpb2barcg0t4n1ai32397ie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1n_qq6ZuityT60MpW7oe3so63P2rnhqs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "918694146633-q073hdtlafpb2barcg0t4n1ai32397ie.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
