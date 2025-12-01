@@ -38,14 +38,37 @@ class TeacherChatListPage extends StatelessWidget {
               // Ambil studentId dari field dokumen
               final studentId = data['studentId'] ?? '';
               final studentName = data['studentName'] ?? '';
+
+              final bool isReadByTeacher = data['isReadByTeacher'] ?? true;
+
               final lastMessage = data['lastMessage'] ?? '';
+              final Timestamp? ts = data['lastTimestamp'];
+              final DateTime? lastTime = ts?.toDate();
 
               return ListTile(
-                title: Text(
-                  "Student $studentName",
-                ), // nanti bisa ambil nama asli dari koleksi students
-                subtitle: Text(lastMessage),
+                title: Text("Student $studentName"),
+                subtitle: Text(
+                  lastMessage,
+                  style: const TextStyle(color: Colors.black),
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      lastTime != null
+                          ? "${lastTime.hour}:${lastTime.minute.toString().padLeft(2, '0')}"
+                          : '',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    if (!isReadByTeacher)
+                      const Icon(Icons.circle, color: Colors.red, size: 10),
+                  ],
+                ),
                 onTap: () {
+                  FirebaseFirestore.instance
+                      .collection('story_rooms')
+                      .doc("${teacherId}_${studentId}")
+                      .set({'isReadByTeacher': true}, SetOptions(merge: true));
                   Navigator.push(
                     context,
                     MaterialPageRoute(

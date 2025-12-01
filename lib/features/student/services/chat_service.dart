@@ -16,15 +16,18 @@ class ChatService {
     String studentName,
   ) async {
     final roomId = getRoomId(teacherId, studentId);
+    final doc = await _firestore.collection('story_rooms').doc(roomId).get();
 
-    await _firestore.collection('story_rooms').doc(roomId).set({
-      'teacherId': teacherId,
-      'studentId': studentId,
-      'studentName': studentName,
-      'participants': [teacherId, studentId],
-      'lastMessage': '',
-      'lastTimestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    if (!doc.exists) {
+      await _firestore.collection('story_rooms').doc(roomId).set({
+        'teacherId': teacherId,
+        'studentId': studentId,
+        'studentName': studentName,
+        'participants': [teacherId, studentId],
+        'lastMessage': '',
+        'lastTimestamp': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   // 🔹 Get chat room ID
@@ -63,9 +66,9 @@ class ChatService {
       'content': text ?? '',
       'imageUrl': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
-      'isRead': false,
     };
 
+    // simpan ke sub-collection messages
     await _firestore
         .collection('story_rooms')
         .doc(roomId)
@@ -73,14 +76,17 @@ class ChatService {
         .doc(messageId)
         .set(messageData);
 
-    // Update last message info
+    // update dokumen room
     await _firestore.collection('story_rooms').doc(roomId).set({
       'teacherId': teacherId,
       'studentId': studentId,
-      'studentName': senderId == studentId ? senderName : null,
+      'studentName': senderName, // simpan nama siswa sekali saja
       'participants': [teacherId, studentId],
       'lastMessage': text ?? '[Image]',
       'lastTimestamp': FieldValue.serverTimestamp(),
+      // 🔹 bedakan flag read
+      'isReadByTeacher': senderId == teacherId ? true : false,
+      'isReadByStudent': senderId == studentId ? true : false,
     }, SetOptions(merge: true));
   }
 

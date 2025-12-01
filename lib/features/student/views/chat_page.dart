@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/static/firebase_auth_status.dart';
 import '../../../core/utils/colors.dart';
 import '../viewmodels/auth_student_viewmodel.dart';
 import '../viewmodels/chat_room_viewmodel.dart'; // Import warna dari satu level di atas
@@ -24,7 +25,6 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -85,9 +85,13 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 final messages = snapshot.data!.docs;
-                final currentUserId = context
-                    .read<AuthStudentViewmodel>()
-                    .authUid!;
+                final authStudentVm = context.read<AuthStudentViewmodel>();
+
+                // Tentukan currentUserId sesuai role
+                final String currentUserId =
+                    authStudentVm.status == FirebaseAuthStatus.authenticated
+                    ? authStudentVm.authUid! // siswa login
+                    : widget.teacherId;
 
                 return ListView.builder(
                   itemCount: messages.length,
@@ -102,8 +106,6 @@ class _ChatPageState extends State<ChatPage> {
                     final imageUrl = msg['imageUrl'];
                     final timestamp = (msg['timestamp'] as Timestamp?)
                         ?.toDate();
-
-                    // cek apakah pesan dari guru atau siswa
 
                     return Align(
                       alignment: isMe
@@ -211,13 +213,29 @@ class _ChatPageState extends State<ChatPage> {
                     icon: const Icon(Icons.send, color: Colors.green),
                     onPressed: () async {
                       final text = _controller.text.trim();
-                      final authVm = context.read<AuthStudentViewmodel>();
-                      final studentName = authVm.studentName ?? "Anda";
                       if (text.isNotEmpty) {
+                        String senderId;
+                        String senderName;
+
+                        // 🔹 Cek apakah yang login guru atau siswa
+                        final authStudentVm = context
+                            .read<AuthStudentViewmodel>();
+                        if (authStudentVm.status ==
+                            FirebaseAuthStatus.authenticated) {
+                          // Jika siswa login
+                          senderId = authStudentVm.authUid!;
+                          senderName = authStudentVm.studentName ?? "Anon";
+                        } else {
+                          // Jika guru login (contoh: ambil dari widget atau AuthTeacherViewmodel)
+                          senderId = widget.teacherId;
+                          senderName =
+                              "Guru"; // atau ambil dari AuthTeacherViewmodel.teacherName
+                        }
+
                         await vm.sendTextMessage(
                           text: text,
-                          senderId: authVm.authUid!,
-                          senderName: studentName,
+                          senderId: senderId,
+                          senderName: senderName,
                         );
                         _controller.clear();
                       }
