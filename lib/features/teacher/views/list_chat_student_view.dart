@@ -10,7 +10,7 @@ class TeacherChatListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: ChatService().getTeacherChatList(teacherId),
+      stream: ChatService().getTeacherChatList(teacherId, null),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
 

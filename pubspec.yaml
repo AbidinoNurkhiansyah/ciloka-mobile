@@ -36,6 +36,8 @@ flutter:
   assets:
     - assets/icons/
     - assets/img/
+    - assets/img/games/
+    - assets/img/level/
   fonts:
     - family: Nunito
       fonts:

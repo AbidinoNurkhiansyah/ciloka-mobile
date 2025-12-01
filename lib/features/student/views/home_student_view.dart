@@ -47,8 +47,7 @@ class HomeStudentView extends StatelessWidget {
     }
 
     // --- Versi "Logged In" (Pakai StreamBuilder) ---
-    // Ini udah bener, ngambil data dari 'users'
-    final studentStream = StudentService().streamStudentProfile(uid); 
+    final studentStream = StudentService().streamStudentProfile(uid);
 
     return Scaffold(
       body: StreamBuilder<StudentModel?>(
@@ -57,17 +56,15 @@ class HomeStudentView extends StatelessWidget {
           // Versi Loading
           if (!snapshot.hasData || snapshot.data == null) {
             final defaultStudent = StudentModel(
-              uid: uid ?? '',
+              uid: uid,
               username: 'Siswa',
               email: '',
               photoUrl: '',
               currentLevel: 1,
               levelProgress: 0.1,
             );
-            // Ambil data level (ini yang nentuin gembok)
-            final levels = LevelModel.getDefaultLevels(
-              defaultStudent.currentLevel,
-            );
+            final levels =
+                LevelModel.getDefaultLevels(defaultStudent.currentLevel);
 
             return Container(
               decoration: const BoxDecoration(color: Color(0xFFB0DAFD)),
@@ -86,7 +83,6 @@ class HomeStudentView extends StatelessWidget {
 
           // Versi Ada Data
           final student = snapshot.data!;
-          // Ambil data level (ini yang nentuin gembok)
           final levels = LevelModel.getDefaultLevels(student.currentLevel);
 
           return Container(
@@ -109,7 +105,6 @@ class HomeStudentView extends StatelessWidget {
 
   // --- WIDGET ATAS (PROFILE) ---
   Widget _buildProfileSection(BuildContext context, StudentModel student) {
-    // Ini udah bagus, gw biarin
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -123,7 +118,7 @@ class HomeStudentView extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           )
         ],
       ),
@@ -144,16 +139,16 @@ class HomeStudentView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // Nampilin level dari data stream
                   'LEVEL ${student.currentLevel}/5',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         shadows: [
                           Shadow(
-                              color: Colors.black.withOpacity(0.3),
-                              offset: Offset(1, 1),
-                              blurRadius: 2)
+                            color: Colors.black.withOpacity(0.3),
+                            offset: const Offset(1, 1),
+                            blurRadius: 2,
+                          )
                         ],
                       ),
                 ),
@@ -162,9 +157,10 @@ class HomeStudentView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: student.levelProgress,
-                    minHeight: 10, // Ditebelin dikit
+                    minHeight: 10,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Colors.red),
                   ),
                 ),
               ],
@@ -179,76 +175,75 @@ class HomeStudentView extends StatelessWidget {
   Widget _buildLevelMap(
     BuildContext context,
     StudentModel student,
-    List<LevelModel> levels, // levels[0]=Lvl 1, levels[1]=Lvl 2, dst.
+    List<LevelModel> levels,
   ) {
     return SingleChildScrollView(
       child: Container(
-        height: 2200, // <-- Tinggi total peta
+        height: 2200, // Tinggi total peta (tetap)
         child: Stack(
           children: [
             // LAPISAN 1: DEKORASI
             _buildDecorativeElements(context),
 
-            // LAPISAN 2: SEMUA ELEMEN PETA
-            // KORDINAT LU NGGAK GW UBAH
+            // LAPISAN 2: PULAU & PATH
             // Level 5 (Paling Atas Kiri)
             Positioned(
               top: 290,
               left: 30,
-              child: _buildLevelIsland(context, levels[4]), // levels[4] = Level 5
+              child: _buildLevelIsland(context, levels[4]),
             ),
             // Path (Jembatan) dari 4 ke 5
             Positioned(
               top: 230,
               left: -20,
-              child: _buildPathConnection(true), // true = tangga.png
+              child: _buildPathConnection(true),
             ),
 
             // Level 4 (Tengah Kanan)
             Positioned(
               top: 520,
               right: 0,
-              child: _buildLevelIsland(context, levels[3]), // levels[3] = Level 4
+              child: _buildLevelIsland(context, levels[3]),
             ),
             // Path (Lengkung) dari 3 ke 4
             Positioned(
               top: 450,
               right: -70,
-              child: _buildPathConnection(false), // false = lengkung.png
+              child: _buildPathConnection(false),
             ),
 
             // Level 3 (Tengah Kiri)
             Positioned(
               top: 650,
               left: 25,
-              child: _buildLevelIsland(context, levels[2]), // levels[2] = Level 3
+              child: _buildLevelIsland(context, levels[2]),
             ),
             // Path (Jembatan) dari 2 ke 3
             Positioned(
               top: 600,
               left: -40,
-              child: _buildPathConnection(true), // true = tangga.png
+              child: _buildPathConnection(true),
             ),
 
             // Path (Lengkung) dari 1 ke 2
             Positioned(
               top: 800,
               right: -40,
-              child: _buildPathConnection(false), // false = lengkung.png
+              child: _buildPathConnection(false),
             ),
 
             // Level 2 (Bawah Kanan)
             Positioned(
               top: 870,
               right: 30,
-              child: _buildLevelIsland(context, levels[1]), // levels[1] = Level 2
+              child: _buildLevelIsland(context, levels[1]),
             ),
 
             // Starting Point (Level 1) (Paling Bawah Kiri)
             Positioned(
               top: 1000,
               left: 10,
-              child: _buildStartingPoint(context), // <-- INI YANG DIKLIK
+              child: _buildStartingPoint(context),
             ),
           ],
         ),
@@ -258,7 +253,6 @@ class HomeStudentView extends StatelessWidget {
 
   // --- WIDGET DEKORASI (BALON & BINTANG) ---
   Widget _buildDecorativeElements(BuildContext context) {
-    // Nggak diubah
     return Positioned.fill(
       child: Stack(
         children: [
@@ -294,7 +288,6 @@ class HomeStudentView extends StatelessWidget {
   }
 
   Widget _buildBalloon(Color color) {
-    // Bikin balonnya lebih berkilau
     return Container(
       width: 35,
       height: 45,
@@ -302,18 +295,19 @@ class HomeStudentView extends StatelessWidget {
         shape: BoxShape.circle,
         color: color,
         gradient: RadialGradient(
-          center: Alignment(-0.5, -0.5),
+          center: const Alignment(-0.5, -0.5),
           colors: [
             Colors.white.withOpacity(0.7),
             color,
           ],
-          stops: [0.0, 1.0],
+          stops: const [0.0, 1.0],
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 4,
-              offset: Offset(2, 2))
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(2, 2),
+          )
         ],
       ),
       child: Stack(
@@ -339,16 +333,12 @@ class HomeStudentView extends StatelessWidget {
   }
 
   // --- WIDGET TITIK AWAL (START) ---
-  // --- NAVIGASI DIBENERIN ---
   Widget _buildStartingPoint(BuildContext context) {
     const islandColor = Color(0xFF4CAF50); // Green
 
     return GestureDetector(
       onTap: () {
-        // --- 2. INI KODE YANG UDAH BENER ---
-        // Pake nama rute dari AppRoutes, BUKAN string '/play_level_1'
         Navigator.pushNamed(context, AppRoutes.playLevel1);
-
         print('Masuk ke Level 1!');
       },
       child: Container(
@@ -357,24 +347,21 @@ class HomeStudentView extends StatelessWidget {
         decoration: BoxDecoration(
           color: islandColor,
           shape: BoxShape.circle,
-          // Bikin berkilau (shiny)
           gradient: RadialGradient(
-            center: Alignment(-0.7, -0.7), // Titik kilau di kiri atas
+            center: const Alignment(-0.7, -0.7),
             radius: 1.0,
             colors: [
-              Colors.white.withOpacity(0.5), // Warna kilau
-              islandColor, // Warna asli
+              Colors.white.withOpacity(0.5),
+              islandColor,
             ],
-            stops: [0.0, 1.0],
+            stops: const [0.0, 1.0],
           ),
           boxShadow: [
-            // Bayangan utama
             BoxShadow(
-              color: Colors.black.withOpacity(0.4), // Bayangan lebih gelap
+              color: Colors.black.withOpacity(0.4),
               blurRadius: 15,
               offset: const Offset(4, 4),
             ),
-            // Efek 'rim' 3D
             BoxShadow(
               color: Colors.white.withOpacity(0.2),
               blurRadius: 1,
@@ -444,23 +431,24 @@ class HomeStudentView extends StatelessWidget {
     );
   }
 
-  // --- WIDGET JALAN (PATH) - BALIK PAKE PNG ---
+  // --- WIDGET JALAN (PATH) - TIDAK MENGHALANGI TAP ---
   Widget _buildPathConnection(bool useLadder) {
-    // KORDINAT LU NGGAK GW UBAH
-    return Container(
-      width: 450,
-      height: 450,
-      child: Image.asset(
-        useLadder ? 'assets/img/tangga.png' : 'assets/img/lengkung.png',
-        height: 220, // Ukuran asli gambar
-        width: 220, // Ukuran asli gambar
-        fit: BoxFit.contain,
+    // Layout, ukuran, posisi TETAP sama – hanya dibungkus IgnorePointer
+    return IgnorePointer(
+      child: Container(
+        width: 450,
+        height: 450,
+        child: Image.asset(
+          useLadder ? 'assets/img/tangga.png' : 'assets/img/lengkung.png',
+          height: 220, // Ukuran asli gambar
+          width: 220, // Ukuran asli gambar
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }
 
-  // --- WIDGET PULAU LEVEL (DIPERBAGUS) ---
-  // --- NAVIGASI DIBENERIN ---
+  // --- WIDGET PULAU LEVEL ---
   Widget _buildLevelIsland(BuildContext context, LevelModel level) {
     Color cloudColor;
     switch (level.levelNumber) {
@@ -483,40 +471,35 @@ class HomeStudentView extends StatelessWidget {
     return GestureDetector(
       onTap: level.isUnlocked
           ? () {
-              // --- 3. INI KODE YANG UDAH BENER ---
               Navigator.pushNamed(
                 context,
-                AppRoutes.playLevel, // <-- Pake AppRoutes
-                arguments: level.levelNumber, // <-- Kirim nomor level
+                AppRoutes.playLevel,
+                arguments: level.levelNumber,
               );
-
               print('Masuk ke ${level.levelName}');
             }
-          : null, // Kalo 'isUnlocked' false, onTap-nya null (nggak bisa diklik)
+          : null,
       child: Container(
         width: 120,
         height: 120,
         decoration: BoxDecoration(
           color: cloudColor.withOpacity(0.9),
           shape: BoxShape.circle,
-          // Bikin berkilau (shiny)
           gradient: RadialGradient(
-            center: Alignment(-0.7, -0.7), // Titik kilau di kiri atas
+            center: const Alignment(-0.7, -0.7),
             radius: 1.0,
             colors: [
-              Colors.white.withOpacity(0.5), // Warna kilau
-              cloudColor, // Warna asli
+              Colors.white.withOpacity(0.5),
+              cloudColor,
             ],
-            stops: [0.0, 1.0],
+            stops: const [0.0, 1.0],
           ),
           boxShadow: [
-            // Bayangan utama
             BoxShadow(
-              color: Colors.black.withOpacity(0.4), // Bayangan lebih gelap
+              color: Colors.black.withOpacity(0.4),
               blurRadius: 15,
               offset: const Offset(4, 4),
             ),
-            // Efek 'rim' 3D
             BoxShadow(
               color: Colors.white.withOpacity(0.2),
               blurRadius: 1,
@@ -536,12 +519,12 @@ class HomeStudentView extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          // Kasih bayangan di teks biar kebaca
                           shadows: [
                             Shadow(
-                                color: Colors.black.withOpacity(0.5),
-                                offset: Offset(1, 1),
-                                blurRadius: 2)
+                              color: Colors.black.withOpacity(0.5),
+                              offset: const Offset(1, 1),
+                              blurRadius: 2,
+                            )
                           ],
                         ),
                   ),
@@ -549,13 +532,13 @@ class HomeStudentView extends StatelessWidget {
                   if (!level.isUnlocked)
                     Stack(
                       alignment: Alignment.center,
-                      clipBehavior: Clip.none, // Biar gemboknya bisa keluar
+                      clipBehavior: Clip.none,
                       children: [
                         Container(
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3), // Bikin gelap
+                            color: Colors.black.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -564,9 +547,8 @@ class HomeStudentView extends StatelessWidget {
                             size: 30,
                           ),
                         ),
-                        // Gemboknya gw taruh di atas
                         Positioned(
-                          top: -10, // Keluar dari lingkaran
+                          top: -10,
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
@@ -574,9 +556,10 @@ class HomeStudentView extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black38,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2))
+                                  color: Colors.black38,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                )
                               ],
                             ),
                             child: const Icon(
