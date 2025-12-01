@@ -1,5 +1,6 @@
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/global_navigator.dart';
+import '../viewmodels/auth_teacher_viewmodel.dart';
 import '../viewmodels/navigation_teacher_viewmodel.dart';
 import '../../../widgets/gradient_stroke_text_widget.dart';
 import 'package:flutter/material.dart';
@@ -127,15 +128,19 @@ class AccountTeacherScreen extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
-                // final prefs = await SharedPreferences.getInstance();
-                // await prefs.clear();
-
+              onPressed: () async {
+                final authViewmodel = Provider.of<AuthTeacherViewmodel>(
+                  context,
+                  listen: false,
+                );
+                await authViewmodel.logout(context);
                 // Reset navigation index ke beranda
                 Provider.of<NavigationTeacherViewmodel>(
                   context,
                   listen: false,
                 ).setIndexBottomNavbar(0);
+
+                Navigator.of(context, rootNavigator: true).pop();
 
                 GlobalNavigator.pushReplacementNamed(AppRoutes.loginTeacher);
               },

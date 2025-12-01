@@ -116,6 +116,7 @@ class AuthStudentViewmodel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await FirebaseAuth.instance.signOut();
       _currentStudentData = null;
       _status = FirebaseAuthStatus.unauthenticated;
       GlobalNavigator.pushReplacementNamed(AppRoutes.loginStudent);
