@@ -4,10 +4,11 @@ import 'package:uuid/uuid.dart';
 import 'package:ciloka_app/features/teacher/services/upload_image_service.dart';
 
 class ChatService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
   final UploadImageService _imageService;
-  ChatService(this._imageService);
   final _uuid = const Uuid();
+
+  ChatService(this._firestore, this._imageService);
 
   Future<void> initRoom(String teacherId, String studentId) async {
     final roomId = getRoomId(teacherId, studentId);

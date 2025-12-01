@@ -109,7 +109,12 @@ void main() async {
         ),
 
         // Service Provider
-        Provider<ChatService>(create: (_) => ChatService(UploadImageService())),
+        Provider<ChatService>(
+          create: (context) => ChatService(
+            FirebaseFirestore.instance,
+            context.read<UploadImageService>(),
+          ),
+        ),
         Provider<UploadImageService>(create: (_) => UploadImageService()),
         ChangeNotifierProvider<ChatRoomViewmodel>(
           create: (context) => ChatRoomViewmodel(

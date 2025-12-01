@@ -62,6 +62,7 @@ class AuthStudentService {
         'nis': indexData['nis'],
         'classId': classId,
         'teacherId': teacherId,
+        'studentId': newUid,
         // Balikin data lain kalo perlu
       };
     } catch (e, stack) {

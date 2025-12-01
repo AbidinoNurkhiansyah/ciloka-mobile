@@ -5,6 +5,9 @@ import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.da
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/global_navigator.dart';
+
 // import '../../../core/routes/app_routes.dart'; // Nggak kepake di sini
 
 class BookStudentView extends StatelessWidget {
@@ -133,11 +136,8 @@ class BookStudentView extends StatelessWidget {
                 // Bungkus Consumer juga di sini kalau butuh data ID guru/siswa
                 Consumer<AuthStudentViewmodel>(
                   builder: (context, vm, _) {
-                    // Ambil ID dengan aman
-                    final teacherId = vm.studentProfile?['teacherId'] ?? '';
-                    final studentId =
-                        vm.studentProfile?['studentId'] ??
-                        ''; // Atau ambil dari Auth
+                    final teacherId = vm.teacherId ?? '';
+                    final studentId = vm.studentId ?? vm.authUid ?? '';
 
                     return _ChatCallout(
                       teacherId: teacherId,
@@ -170,10 +170,10 @@ class _ChatCallout extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // TODO: Ganti pake AppRoutes.chatStudent yang bener
-        // GlobalNavigator.pushNamed(
-        //   AppRoutes.chatStudent,
-        //   arguments: {'teacherId': teacherId, 'studentId': studentId},
-        // );
+        GlobalNavigator.pushNamed(
+          AppRoutes.chatStudent,
+          arguments: {'teacherId': teacherId, 'studentId': studentId},
+        );
         print("Chat diklik! Guru: $teacherId, Siswa: $studentId");
       },
       child: Container(

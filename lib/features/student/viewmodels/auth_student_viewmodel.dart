@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../services/auth_student_service.dart';
 
 import '../../../core/routes/app_routes.dart';
@@ -19,6 +21,12 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
   Map<String, dynamic>? get currentStudentData => _currentStudentData;
   bool get isLoading => _isLoading;
+
+  String? get studentId => studentProfile?['studentId'];
+  String? get teacherId => studentProfile?['teacherId'];
+  String? get studentName => studentProfile?['studentName'];
+
+  String? get authUid => FirebaseAuth.instance.currentUser?.uid;
 
   void updateService(AuthStudentService service) {
     _studentService = service;

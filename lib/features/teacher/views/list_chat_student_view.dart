@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../student/services/chat_service.dart';
+import '../../student/views/chat_page.dart';
+import '../services/upload_image_service.dart';
 
 class TeacherChatListPage extends StatelessWidget {
   final String teacherId;
@@ -10,7 +13,10 @@ class TeacherChatListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: ChatService().getTeacherChatList(teacherId, null),
+      stream: ChatService(
+        FirebaseFirestore.instance,
+        UploadImageService(),
+      ).getTeacherChatList(teacherId),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
 

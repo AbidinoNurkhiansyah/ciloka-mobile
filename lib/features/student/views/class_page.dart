@@ -228,9 +228,11 @@ class ClassPageContent extends StatelessWidget {
         else
           icon = Icons.menu_book;
 
-        return Icon(icon,
-            size: 30,
-            color: isStarCard ? const Color(0xFFFFC107) : Colors.white);
+        return Icon(
+          icon,
+          size: 30,
+          color: isStarCard ? const Color(0xFFFFC107) : Colors.white,
+        );
       },
     );
 
@@ -245,10 +247,7 @@ class ClassPageContent extends StatelessWidget {
         children: <Widget>[
           Text(
             'Wali Kelas',
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 14),
             overflow: TextOverflow.ellipsis,
           ),
           Text(
@@ -271,10 +270,7 @@ class ClassPageContent extends StatelessWidget {
         children: <Widget>[
           Text(
             'Level',
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 14),
           ),
           Text(
             title, // Level 5
@@ -296,10 +292,7 @@ class ClassPageContent extends StatelessWidget {
         children: <Widget>[
           Text(
             'Poin', // Tambahkan label Poin
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 14),
           ),
           Text(
             title, // 50
@@ -331,10 +324,7 @@ class ClassPageContent extends StatelessWidget {
           ),
           Text(
             subtitle ?? '', // SDN 1 TELAGASARI
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 12,
-            ),
+            style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 12),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           ),
@@ -352,9 +342,7 @@ class ClassPageContent extends StatelessWidget {
           imageWidget,
           const SizedBox(width: 12),
           // Text di kanan (menggunakan Expanded untuk mengisi sisa ruang)
-          Expanded(
-            child: textContent,
-          ),
+          Expanded(child: textContent),
         ],
       ),
     );
