@@ -57,9 +57,6 @@ class BookStudentView extends StatelessWidget {
                       final String photoUrl = student['photoUrl'] ?? '';
                       final String studentName =
                           student['studentName'] ?? 'Siswa';
-                      final String grade = student['grade']?.toString() ?? '';
-                      final String className = student['className'] ?? '';
-                      final String teacherName = student['teacherName'] ?? '-';
 
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.center,

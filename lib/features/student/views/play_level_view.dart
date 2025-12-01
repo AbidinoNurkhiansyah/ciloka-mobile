@@ -41,7 +41,7 @@ class PlayLevelView extends StatelessWidget {
             left: 0,
             right: 0,
             child: Image.asset(
-              'assets/img/character_magnifier.png', // <-- GANTI PATH INI
+              'assets/img/level/orang.png', // <-- GANTI PATH INI
               height: 250, // Ukuran karakter
               errorBuilder: (context, error, stackTrace) {
                 return Icon(Icons.person, size: 250, color: Colors.grey);

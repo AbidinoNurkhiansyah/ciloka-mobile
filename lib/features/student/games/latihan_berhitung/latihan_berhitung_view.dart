@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Import file widget bantuan
 import '../../../../widgets/game_feedback_overlay.dart';
 import 'success_screen.dart';
 
@@ -97,14 +96,26 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     _generateNewQuestion();
   }
 
+  // --- SOAL PER LEVEL (maksimal 5) ---
   void _generateNewQuestion() {
-    // Logic soal berdasarkan level
-    if (widget.levelNumber == 1) {
-      numbers = [2345, 2375, 2550, 2874];
-    } else if (widget.levelNumber == 2) {
-      numbers = [5100, 5050, 5005, 5105];
-    } else {
-      numbers = [9999, 1000, 5000, 7500];
+    switch (widget.levelNumber) {
+      case 1:
+        numbers = [12, 25, 9, 18];
+        break;
+      case 2:
+        numbers = [145, 132, 167, 120];
+        break;
+      case 3:
+        numbers = [2345, 2375, 2550, 2874];
+        break;
+      case 4:
+        numbers = [5100, 5050, 5005, 5105];
+        break;
+      case 5:
+        numbers = [9999, 1000, 7500, 8750];
+        break;
+      default:
+        numbers = [5, 10, 3, 8];
     }
 
     correctNumber = numbers.reduce(max);
@@ -115,8 +126,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
   }
 
   void _selectNumber(int chosenNumber) {
-    if (status > 1)
-      return; // Kalo udah ada hasil (benar/salah), gak bisa klik lagi
+    if (status > 1) return; // kalau sudah benar/salah, ga bisa pilih lagi
     setState(() {
       selectedNumber = chosenNumber;
       status = 1;
@@ -127,23 +137,23 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     if (selectedNumber == null) return;
     setState(() {
       if (selectedNumber == correctNumber) {
-        status = 2; // Jawaban Benar -> Muncun Overlay Benar
+        status = 2;
       } else {
-        status = 3; // Jawaban Salah -> Muncul Overlay Salah
+        status = 3;
       }
     });
   }
 
-  // --- FUNGSI UPDATE LEVEL KE FIREBASE (STUDENT_INDEX) ---
+  // --- UPDATE LEVEL KE FIREBASE (student_index + users, max 5) ---
   void _navigateToSuccessScreen() async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
-        int newLevel = widget.levelNumber + 1;
+        // level maksimal 5
+        int newLevel =
+            widget.levelNumber < 5 ? widget.levelNumber + 1 : 5;
 
-        print("DEBUG: Mencari user di student_index dengan ID: $uid");
-
-        // 1. Cari dokumen di student_index berdasarkan studentId (UID)
+        // 1) UPDATE DI student_index
         final querySnapshot = await FirebaseFirestore.instance
             .collection('student_index')
             .where('studentId', isEqualTo: uid)
@@ -151,92 +161,101 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
             .get();
 
         if (querySnapshot.docs.isNotEmpty) {
-          // 2. Ketemu! Ambil referensi dokumennya
           final docRef = querySnapshot.docs.first.reference;
-
-          // 3. Update level di dokumen tersebut
           await docRef.update({'currentLevel': newLevel});
-
-          print('DEBUG: Sukses update level ke $newLevel di student_index!');
-        } else {
-          print(
-            "DEBUG: GAGAL! Tidak ada data siswa di student_index dengan UID ini.",
-          );
         }
-      } else {
-        print("DEBUG: GAGAL! UID user null (Belum login).");
+
+        // 2) UPDATE DI users (dipakai HomeStudentView)
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .update({
+          'currentLevel': newLevel,
+          // optional: reset progress
+          'levelProgress': 0.0,
+        });
       }
     } catch (e) {
+      // ignore: avoid_print
       print('DEBUG ERROR: $e');
     }
 
-    // Pindah ke halaman Sukses
     if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const SuccessScreen()),
     ).then((_) {
-      // Pas balik dari halaman sukses, tutup halaman game ini (balik ke Peta)
       if (mounted) {
         Navigator.pop(context);
       }
     });
   }
 
-  // Widget Overlay Benar/Salah
+  // --- OVERLAY BENAR / SALAH ---
   Widget _buildFeedbackOverlay() {
     if (status == 2) {
       return CorrectOverlay(
-        onContinue: () {
-          _navigateToSuccessScreen();
-        },
+        onContinue: _navigateToSuccessScreen,
       );
     } else if (status == 3) {
       return IncorrectOverlay(
         correctAnwerText: "$correctNumber",
-        onContinue: () {
-          _generateNewQuestion();
-        },
+        onContinue: _generateNewQuestion,
       );
     }
-    return Container(); // Kalo status 0 atau 1, gak nampilin apa-apa
+    return Container();
   }
 
-  // Widget Tombol Angka
+  // --- TOMBOL ANGKA ---
   Widget _buildNumberButton(int number, Color baseColor) {
-    bool isCurrentlySelected = selectedNumber == number;
-    Color buttonColor = baseColor;
-    Color borderColor = Colors.transparent;
-    double borderWidth = 0.0;
+    bool isSelected = selectedNumber == number;
+    bool isDisabled = status > 1;
 
-    if (status == 1 && isCurrentlySelected) {
-      borderColor = correctGreen.withOpacity(0.7);
-      borderWidth = 4.0;
+    Color bg = baseColor;
+    if (isSelected && status == 1) {
+      bg = correctGreen;
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Material(
-        color: buttonColor,
-        borderRadius: BorderRadius.circular(15.0),
-        elevation: 5,
-        child: InkWell(
-          onTap: (status == 0 || status == 1)
-              ? () => _selectNumber(number)
-              : null,
-          borderRadius: BorderRadius.circular(15.0),
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15.0),
-              border: Border.all(color: borderColor, width: borderWidth),
-            ),
-            child: Text(
-              number.toString(),
-              style: GoogleFonts.nunito(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+    return AnimatedScale(
+      scale: isSelected ? 1.05 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          elevation: 6,
+          child: InkWell(
+            onTap: isDisabled ? null : () => _selectNumber(number),
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  colors: [
+                    bg.withOpacity(0.95),
+                    bg.withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  if (!isDisabled)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                number.toString(),
+                style: GoogleFonts.nunito(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -245,155 +264,322 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     );
   }
 
-  // --- TAMPILAN UTAMA (BUILD) ---
+  // --- BUILD UI ---
   @override
   Widget build(BuildContext context) {
     List<Color> colors = [lightGreen, lightRed, lightOrange, lightPurple];
 
     bool isCheckButtonEnabled =
         selectedNumber != null && (status == 0 || status == 1);
-    Color checkButtonBackgroundColor = isCheckButtonEnabled
-        ? correctGreen
-        : Colors.grey;
-    Color checkButtonBorderColor = isCheckButtonEnabled
-        ? correctGreen
-        : Colors.grey;
 
     return Scaffold(
       backgroundColor: primaryBlue,
       body: Stack(
         children: [
+          // BACKGROUND GRADIENT + BUBBLE
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF6BCBFF),
+                  Color(0xFFB8E5FF),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          Positioned(
+            top: -80,
+            left: -40,
+            child: _bubble(140, const Color(0xFF92D8FF).withOpacity(0.7)),
+          ),
+          Positioned(
+            top: 30,
+            right: -30,
+            child: _bubble(110, const Color(0xFFFFF3B0).withOpacity(0.9)),
+          ),
+          Positioned(
+            bottom: 120,
+            left: -30,
+            child: _bubble(100, const Color(0xFF6DD17C)),
+          ),
+          Positioned(
+            bottom: 90,
+            right: -40,
+            child: _bubble(130, const Color(0xFF5EC76D)),
+          ),
+
           SafeArea(
             child: Column(
               children: [
-                // Header
+                // HEADER
                 Padding(
-                  padding: const EdgeInsets.all(15.0),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: () => Navigator.pop(context),
+                      _circleButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: () => Navigator.pop(context),
                       ),
-                      Flexible(
-                        child: Text(
-                          'LATIHAN BERHITUNG',
-                          style: GoogleFonts.nunito(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            shadows: const [
-                              Shadow(
-                                blurRadius: 3,
-                                color: Colors.black38,
-                                offset: Offset(1, 1),
-                              ),
-                            ],
+                      Column(
+                        children: [
+                          Text(
+                            'LATIHAN BERHITUNG',
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              shadows: const [
+                                Shadow(
+                                  blurRadius: 3,
+                                  color: Colors.black38,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(height: 4),
+                          _buildLevelDots(),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.volume_up,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: () {},
+                      _circleButton(
+                        icon: Icons.volume_up_rounded,
+                        onTap: () {},
                       ),
                     ],
                   ),
                 ),
 
-                // Judul Soal
+                // TITLE SOAL
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(
                     'Pilih Angka Terbesar',
                     style: getStrokeTextStyle(
                       Colors.white,
                       Colors.deepOrange,
-                      32,
+                      30,
                     ),
                   ),
                 ),
 
-                // Grid Angka
+                // KARTU SOAL + GRID
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GridView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      shrinkWrap: true,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1.5,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 8),
+                    child: Column(
+                      children: [
+                        // Kartu info level / instruksi
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.96),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                      itemCount: numbers.length,
-                      itemBuilder: (context, index) {
-                        return _buildNumberButton(
-                          numbers[index],
-                          colors[index % colors.length],
-                        );
-                      },
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEAF4FF),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.calculate_rounded,
+                                  color: Color(0xFF1E98F5),
+                                  size: 32,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Level ${widget.levelNumber} dari 5',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF333333),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Pilih angka yang nilainya paling besar di antara pilihan di bawah.',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF666666),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Kartu grid angka
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.96),
+                              borderRadius: BorderRadius.circular(26),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: GridView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1.5,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                              itemCount: numbers.length,
+                              itemBuilder: (context, index) {
+                                return _buildNumberButton(
+                                  numbers[index],
+                                  colors[index % colors.length],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Gambar Burung
+                // MASCOT + TEKS PETUNJUK
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Image.asset(
-                    'assets/img/bird_wizard.png',
-                    height: 100,
-                    errorBuilder: (c, e, s) => const Icon(
-                      Icons.flutter_dash,
-                      size: 80,
-                      color: Colors.white,
+                  padding: const EdgeInsets.only(bottom: 8, top: 4),
+                  child: SizedBox(
+                    height: 110,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned(
+                          bottom: 0,
+                          child: Image.asset(
+                            'assets/img/bird_wizard.png',
+                            height: 90,
+                            errorBuilder: (c, e, s) => const Icon(
+                              Icons.flutter_dash,
+                              size: 80,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: 50,
+                          right: 50,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              selectedNumber == null
+                                  ? 'Klik salah satu angka dulu ya!'
+                                  : 'Sudah yakin? Tekan tombol hijau di bawah.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF444444),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Tombol Cek Jawaban
+                // TOMBOL CEK JAWABAN
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: ElevatedButton(
-                    onPressed: isCheckButtonEnabled ? _checkAnswer : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: checkButtonBackgroundColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(
-                          color: checkButtonBorderColor,
-                          width: 2,
+                  padding:
+                      const EdgeInsets.only(left: 24, right: 24, bottom: 10),
+                  child: GestureDetector(
+                    onTap: isCheckButtonEnabled ? _checkAnswer : null,
+                    child: Opacity(
+                      opacity: isCheckButtonEnabled ? 1.0 : 0.5,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 13, horizontal: 24),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF4CD964),
+                              Color(0xFF34C759),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  Colors.green.shade800.withOpacity(0.45),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.check_rounded,
+                                color: Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Cek Jawaban',
+                              style: GoogleFonts.nunito(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      elevation: 5,
-                    ),
-                    child: Text(
-                      'Cek Jawaban',
-                      style: GoogleFonts.nunito(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
                 ),
 
-                // Tanah
+                // TANAH
                 Container(
                   height: 40,
                   width: double.infinity,
@@ -409,8 +595,86 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
             ),
           ),
 
-          // Overlay (Benar/Salah)
           _buildFeedbackOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGET BANTUAN UI ---
+
+  Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            )
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF1E98F5),
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLevelDots() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        final level = index + 1;
+        final isActive = level == widget.levelNumber;
+        final isPassed = level < widget.levelNumber;
+
+        Color color;
+        if (isPassed) {
+          color = const Color(0xFFFFD93D);
+        } else if (isActive) {
+          color = const Color(0xFF34C759);
+        } else {
+          color = Colors.white.withOpacity(0.8);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2.5),
+          child: Container(
+            width: isActive ? 12 : 9,
+            height: isActive ? 12 : 9,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border:
+                  isActive ? Border.all(color: Colors.white, width: 2) : null,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _bubble(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.5),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          )
         ],
       ),
     );
