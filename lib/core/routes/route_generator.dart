@@ -1,3 +1,4 @@
+import 'package:ciloka_app/features/teacher/views/list_chat_student_view.dart';
 import 'package:flutter/material.dart';
 
 // --- IMPORT FILE HALAMAN ---
@@ -39,6 +40,10 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const RegisterTeacherView());
       case AppRoutes.mainTeacher:
         return MaterialPageRoute(builder: (_) => const MainTeacherView());
+      case AppRoutes.listChatStudent:
+        return MaterialPageRoute(
+          builder: (_) => const TeacherChatListPage(teacherId: 'teacherId'),
+        );
       case AppRoutes.chatTeacher:
         return MaterialPageRoute(builder: (_) => const ChatTeacherView());
       case AppRoutes.classDataTeacher:

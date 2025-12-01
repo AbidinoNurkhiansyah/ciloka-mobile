@@ -23,11 +23,18 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
+
+  @override
   @override
   void initState() {
     super.initState();
+
+    final authVm = context.read<AuthStudentViewmodel>();
+    final studentId = authVm.studentId ?? authVm.authUid!;
+    final studentName = authVm.studentName ?? "Anonymous";
+
     final chatVm = context.read<ChatRoomViewmodel>();
-    chatVm.init(widget.teacherId, widget.studentId);
+    chatVm.init(widget.teacherId, studentId, studentName);
   }
 
   @override
@@ -78,6 +85,9 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 final messages = snapshot.data!.docs;
+                final currentUserId = context
+                    .read<AuthStudentViewmodel>()
+                    .authUid!;
 
                 return ListView.builder(
                   itemCount: messages.length,
@@ -86,6 +96,7 @@ class _ChatPageState extends State<ChatPage> {
                     final isImage = msg['type'] == 'image';
                     final senderId = msg['senderId'] ?? '';
                     final senderName = msg['senderName'] ?? '';
+                    final isMe = senderId == currentUserId;
 
                     final content = msg['content'] ?? '';
                     final imageUrl = msg['imageUrl'];
@@ -94,12 +105,10 @@ class _ChatPageState extends State<ChatPage> {
 
                     // cek apakah pesan dari guru atau siswa
 
-                    final isTeacher = senderId == widget.teacherId;
-                    debugPrint('senderName: $senderName');
                     return Align(
-                      alignment: isTeacher
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
+                      alignment: isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(
                           vertical: 6,
@@ -107,11 +116,11 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isTeacher ? Colors.grey[300] : chatGreen,
+                          color: isMe ? Colors.grey[300] : chatGreen,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
-                          crossAxisAlignment: isTeacher
+                          crossAxisAlignment: isMe
                               ? CrossAxisAlignment.start
                               : CrossAxisAlignment.end,
                           children: [
@@ -121,7 +130,7 @@ class _ChatPageState extends State<ChatPage> {
 
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: isTeacher ? Colors.black : Colors.white,
+                                color: isMe ? Colors.black : Colors.white,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -132,9 +141,7 @@ class _ChatPageState extends State<ChatPage> {
                                 : Text(
                                     content,
                                     style: TextStyle(
-                                      color: isTeacher
-                                          ? Colors.black
-                                          : Colors.white,
+                                      color: isMe ? Colors.black : Colors.white,
                                     ),
                                   ),
 
@@ -146,9 +153,7 @@ class _ChatPageState extends State<ChatPage> {
                                 "${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}",
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isTeacher
-                                      ? Colors.black54
-                                      : Colors.white70,
+                                  color: isMe ? Colors.black54 : Colors.white70,
                                 ),
                               ),
                           ],
@@ -178,7 +183,7 @@ class _ChatPageState extends State<ChatPage> {
                       final studentName = authVm.studentName ?? "Anda";
                       if (picked != null) {
                         await vm.sendImageMessage(
-                          senderId: widget.studentId,
+                          senderId: authVm.authUid!,
                           senderName:
                               studentName, // 🔥 ganti dengan nama siswa asli
                           imageFile: File(picked.path),
@@ -211,7 +216,7 @@ class _ChatPageState extends State<ChatPage> {
                       if (text.isNotEmpty) {
                         await vm.sendTextMessage(
                           text: text,
-                          senderId: widget.studentId,
+                          senderId: authVm.authUid!,
                           senderName: studentName,
                         );
                         _controller.clear();

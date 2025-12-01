@@ -10,12 +10,17 @@ class ChatService {
 
   ChatService(this._firestore, this._imageService);
 
-  Future<void> initRoom(String teacherId, String studentId) async {
+  Future<void> initRoom(
+    String teacherId,
+    String studentId,
+    String studentName,
+  ) async {
     final roomId = getRoomId(teacherId, studentId);
 
     await _firestore.collection('story_rooms').doc(roomId).set({
       'teacherId': teacherId,
       'studentId': studentId,
+      'studentName': studentName,
       'participants': [teacherId, studentId],
       'lastMessage': '',
       'lastTimestamp': FieldValue.serverTimestamp(),
@@ -28,10 +33,15 @@ class ChatService {
   }
 
   Stream<QuerySnapshot> getTeacherChatList(String teacherId) {
-    return FirebaseFirestore.instance
+    return _firestore
         .collection('story_rooms')
-        .where('participants', arrayContains: teacherId)
+        .where('teacherId', isEqualTo: teacherId)
         .snapshots();
+  }
+
+  Stream<DocumentSnapshot> getChatRoom(String teacherId, String studentId) {
+    final roomId = getRoomId(teacherId, studentId);
+    return _firestore.collection('story_rooms').doc(roomId).snapshots();
   }
 
   // 🔹 Send message (text / image)
@@ -65,6 +75,9 @@ class ChatService {
 
     // Update last message info
     await _firestore.collection('story_rooms').doc(roomId).set({
+      'teacherId': teacherId,
+      'studentId': studentId,
+      'studentName': senderId == studentId ? senderName : null,
       'participants': [teacherId, studentId],
       'lastMessage': text ?? '[Image]',
       'lastTimestamp': FieldValue.serverTimestamp(),

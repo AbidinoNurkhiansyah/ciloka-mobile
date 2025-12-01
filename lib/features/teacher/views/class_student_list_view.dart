@@ -49,7 +49,9 @@ class ClassStudentListView extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () {
-                    GlobalNavigator.pushReplacementNamed(AppRoutes.chatTeacher);
+                    GlobalNavigator.pushReplacementNamed(
+                      AppRoutes.listChatStudent,
+                    );
                   },
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
                   color: colorScheme.onSurface,

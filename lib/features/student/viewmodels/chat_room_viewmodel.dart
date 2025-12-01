@@ -21,11 +21,15 @@ class ChatRoomViewmodel extends ChangeNotifier {
   bool get isSending => _isSending;
 
   Stream<QuerySnapshot>? messages;
-  Future<void> init(String teacherId, String studentId) async {
+  Future<void> init(
+    String teacherId,
+    String studentId,
+    String studentName,
+  ) async {
     this.teacherId = teacherId;
     this.studentId = studentId;
 
-    await _chatService.initRoom(teacherId, studentId);
+    await _chatService.initRoom(teacherId, studentId, studentName);
 
     messages = _chatService.getMessages(teacherId, studentId);
 
