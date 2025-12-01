@@ -35,6 +35,7 @@ class ChatRoomViewmodel extends ChangeNotifier {
   Future<void> sendTextMessage({
     required String text,
     required String senderId,
+    required String senderName,
   }) async {
     if (teacherId == null || studentId == null) return;
 
@@ -44,6 +45,7 @@ class ChatRoomViewmodel extends ChangeNotifier {
       teacherId: teacherId!,
       studentId: studentId!,
       senderId: senderId,
+      senderName: senderName,
       text: text,
     );
 
@@ -54,6 +56,7 @@ class ChatRoomViewmodel extends ChangeNotifier {
   Future<void> sendImageMessage({
     required String senderId,
     required File imageFile,
+    required String senderName,
   }) async {
     if (teacherId == null || studentId == null) return;
 
@@ -69,6 +72,7 @@ class ChatRoomViewmodel extends ChangeNotifier {
         teacherId: teacherId!,
         studentId: studentId!,
         senderId: senderId,
+        senderName: senderName,
         imageUrl: imageUrl,
       );
     } catch (e) {

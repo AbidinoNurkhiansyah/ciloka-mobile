@@ -39,6 +39,7 @@ class ChatService {
     required String teacherId,
     required String studentId,
     required String senderId,
+    required String senderName,
     String? text,
     String? imageUrl,
   }) async {
@@ -47,6 +48,7 @@ class ChatService {
 
     final messageData = {
       'senderId': senderId,
+      'senderName': senderName,
       'type': imageUrl != null ? 'image' : 'text',
       'content': text ?? '',
       'imageUrl': imageUrl,
