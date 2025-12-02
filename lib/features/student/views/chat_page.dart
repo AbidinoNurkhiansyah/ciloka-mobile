@@ -194,9 +194,13 @@ class _ChatPageState extends State<ChatPage> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           Container(
-            width: 58,
-            height: 58,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
@@ -211,7 +215,7 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
             child: const Center(
-              child: Text("👩‍🏫", style: TextStyle(fontSize: 32)),
+              child: Text("👩‍🏫", style: TextStyle(fontSize: 28)),
             ),
           ),
           const SizedBox(width: 12),
@@ -222,7 +226,7 @@ class _ChatPageState extends State<ChatPage> {
                 Text(
                   "Ruang Bincang Ceria",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF424242),
                   ),
@@ -230,28 +234,7 @@ class _ChatPageState extends State<ChatPage> {
                 SizedBox(height: 2),
                 Text(
                   "Tanya apa saja ke gurumu ya ✨",
-                  style: TextStyle(fontSize: 13, color: Color(0xFF757575)),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: chatGreen,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.circle, size: 10, color: Colors.lightGreenAccent),
-                SizedBox(width: 4),
-                Text(
-                  "Online",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF757575)),
                 ),
               ],
             ),
