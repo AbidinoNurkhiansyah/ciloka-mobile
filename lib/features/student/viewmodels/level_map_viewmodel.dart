@@ -22,6 +22,7 @@ class LevelMapViewModel extends ChangeNotifier {
     if (_student != null) {
       _student = StudentModel(
         uid: _student!.uid,
+        studentName: _student!.studentName,
         username: _student!.username,
         email: _student!.email,
         photoUrl: _student!.photoUrl,
