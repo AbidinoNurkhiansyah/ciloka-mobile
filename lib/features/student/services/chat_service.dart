@@ -61,7 +61,6 @@ class ChatService {
 
     final messageData = {
       'senderId': senderId,
-      'senderName': senderName,
       'type': imageUrl != null ? 'image' : 'text',
       'content': text ?? '',
       'imageUrl': imageUrl,
@@ -78,15 +77,11 @@ class ChatService {
 
     // update dokumen room
     await _firestore.collection('story_rooms').doc(roomId).set({
-      'teacherId': teacherId,
-      'studentId': studentId,
-      'studentName': senderName, // simpan nama siswa sekali saja
-      'participants': [teacherId, studentId],
       'lastMessage': text ?? '[Image]',
       'lastTimestamp': FieldValue.serverTimestamp(),
-      // 🔹 bedakan flag read
-      'isReadByTeacher': senderId == teacherId ? true : false,
-      'isReadByStudent': senderId == studentId ? true : false,
+
+      'isReadByTeacher': senderId == teacherId,
+      'isReadByStudent': senderId == studentId,
     }, SetOptions(merge: true));
   }
 

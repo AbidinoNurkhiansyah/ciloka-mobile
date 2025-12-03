@@ -30,7 +30,7 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
 
     final authVm = context.read<AuthStudentViewmodel>();
-    final studentId = authVm.studentId ?? authVm.authUid!;
+    final studentId = authVm.authUid!;
     final studentName = authVm.studentName ?? "Anak Hebat";
 
     final chatVm = context.read<ChatRoomViewmodel>();

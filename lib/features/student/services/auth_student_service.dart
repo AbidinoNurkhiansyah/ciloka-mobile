@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // <-- 1. JANGAN LUPA IMPORT INI
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStudentService {
   final FirebaseFirestore _firestore;
@@ -37,32 +38,37 @@ class AuthStudentService {
         return null;
       }
 
-      // --- 🔥 STEP PENTING: LOGIN KE FIREBASE AUTH 🔥 ---
-      // Kita login secara 'Anonymous' karena siswa cuma pake NIS
-      final userCredential = await _auth.signInAnonymously();
-      final String newUid = userCredential.user!.uid;
-      debugPrint("✅ Berhasil Login ke Firebase! UID Baru: $newUid");
+      // --- 🔥 STEP PENTING: LOGIN ANONYMOUS TAPI UID TETAP 🔥 ---
+      final prefs = await SharedPreferences.getInstance();
+      String? savedUid = prefs.getString('student_uid_$nis');
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        savedUid = currentUser.uid;
+        debugPrint('✅ Sudah ada user anonymous aktif, pakai UID: $savedUid');
+      } else {
+        final userCredential = await _auth.signInAnonymously();
+        savedUid = userCredential.user!.uid;
+        debugPrint('✅ Login anonymous baru, UID: $savedUid');
+      }
+      // Tidak perlu cek (savedUid != null) karena sudah pasti bukan null
+      debugPrint("✅ Berhasil Login ke Firebase! UID: $savedUid");
 
       // --- 🔥 STEP PENTING: UPDATE UID DI DATABASE 🔥 ---
-      // Kita harus update 'studentId' di database dengan UID yang baru login ini.
-      // Supaya nanti pas main game, game-nya bisa nemu data ini pake UID.
       await _firestore.collection('student_index').doc(nis).update({
-        'studentId': newUid,
+        'studentId': savedUid,
       });
       debugPrint("✅ Database student_index diupdate dengan UID baru.");
 
       // STEP 2 — AMBIL DATA SISWA (OPSIONAL, BUAT TAMPILAN AJA)
       final teacherId = indexData['teacherId'];
       final classId = indexData['classId'];
-      // Note: studentId di sini mungkin masih yang lama, tapi gak apa2,
-      // yang penting di 'student_index' udah kita update.
 
       return {
         'studentName': indexData['studentName'],
         'nis': indexData['nis'],
         'classId': classId,
         'teacherId': teacherId,
-        'studentId': newUid,
+        'studentId': savedUid,
         // Balikin data lain kalo perlu
       };
     } catch (e, stack) {

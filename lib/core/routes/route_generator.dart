@@ -11,7 +11,7 @@ import '../../features/splash_screen.dart';
 import '../../features/student/views/login_student_view.dart';
 import '../../features/student/views/main_student_view.dart';
 import '../../features/teacher/views/add_student_teacher_screen.dart';
-import '../../features/teacher/views/chat_teacher_view.dart';
+
 import '../../features/teacher/views/class_student_list_view.dart';
 import '../../features/teacher/views/class_teacher_view.dart';
 import '../../features/teacher/views/login_teacher_view.dart';
@@ -44,8 +44,7 @@ class RouteGenerator {
         return MaterialPageRoute(
           builder: (_) => const TeacherChatListPage(teacherId: 'teacherId'),
         );
-      case AppRoutes.chatTeacher:
-        return MaterialPageRoute(builder: (_) => const ChatTeacherView());
+
       case AppRoutes.classDataTeacher:
         return MaterialPageRoute(
           builder: (_) => const ClassStudentListView(),

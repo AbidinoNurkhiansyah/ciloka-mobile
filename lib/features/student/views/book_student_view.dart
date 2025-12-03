@@ -1,14 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ciloka_app/core/theme/app_spacing.dart';
-// import 'package:ciloka_app/core/utils/global_navigator.dart'; // Nggak kepake di sini
 import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/global_navigator.dart';
-
-// import '../../../core/routes/app_routes.dart'; // Nggak kepake di sini
 
 class BookStudentView extends StatelessWidget {
   const BookStudentView({super.key});
@@ -132,12 +129,15 @@ class BookStudentView extends StatelessWidget {
 
                 AppSpacing.vMd,
 
-                // CHAT CALLOUT
-                // Bungkus Consumer juga di sini kalau butuh data ID guru/siswa
                 Consumer<AuthStudentViewmodel>(
                   builder: (context, vm, _) {
-                    final teacherId = vm.teacherId ?? '';
-                    final studentId = vm.studentId ?? vm.authUid ?? '';
+                    // Pastikan ID sudah ready
+                    if (vm.teacherId == null || vm.authUid == null) {
+                      return SizedBox(); // or loading
+                    }
+
+                    final teacherId = vm.teacherId!;
+                    final studentId = vm.authUid!;
 
                     return _ChatCallout(
                       teacherId: teacherId,
@@ -174,7 +174,7 @@ class _ChatCallout extends StatelessWidget {
           AppRoutes.chatStudent,
           arguments: {'teacherId': teacherId, 'studentId': studentId},
         );
-        print("Chat diklik! Guru: $teacherId, Siswa: $studentId");
+        debugPrint("Chat diklik! Guru: $teacherId, Siswa: $studentId");
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

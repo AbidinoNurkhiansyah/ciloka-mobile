@@ -46,7 +46,7 @@ class TeacherChatListPage extends StatelessWidget {
               final DateTime? lastTime = ts?.toDate();
 
               return ListTile(
-                title: Text("Student $studentName"),
+                title: Text("$studentName"),
                 subtitle: Text(
                   lastMessage,
                   style: const TextStyle(color: Colors.black),

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../core/routes/app_routes.dart';
@@ -46,7 +47,13 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     Future.delayed(Duration(seconds: 3), () {
-      if (mounted) {
+      if (!mounted) return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Sudah login anonymous, langsung ke mainStudent
+        Navigator.pushReplacementNamed(context, AppRoutes.mainStudent);
+      } else {
+        // Belum login, ke selectRole
         Navigator.pushReplacementNamed(context, AppRoutes.selectRole);
       }
     });
