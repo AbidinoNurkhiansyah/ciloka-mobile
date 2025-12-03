@@ -65,6 +65,8 @@ class LeaderboardStudentView extends StatelessWidget {
 
               final String classId = data['classId'] ?? '';
               final String teacherId = data['teacherId'] ?? '';
+              final String grade = data['grade'] ?? '-';
+              final String className = data['className'] ?? '-';
 
               if (classId.isEmpty || teacherId.isEmpty) {
                 return const Center(
@@ -123,7 +125,7 @@ class LeaderboardStudentView extends StatelessWidget {
                       AppSpacing.vMd,
                       _buildHeaderTrophy(context),
                       AppSpacing.vSm,
-                      _buildClassInfoBanner(classId),
+                      _buildClassInfoBanner(grade, className),
                       AppSpacing.vSm,
                       Expanded(
                         child: Container(
@@ -234,8 +236,8 @@ class LeaderboardStudentView extends StatelessWidget {
     );
   }
 
-  // 🎓 Banner info kelas (sementara cuma tampilkan classId)
-  Widget _buildClassInfoBanner(String classId) {
+  // 🎓 Banner info kelas (tampilkan grade dan className)
+  Widget _buildClassInfoBanner(String grade, String className) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -248,7 +250,7 @@ class LeaderboardStudentView extends StatelessWidget {
           const Icon(Icons.class_, size: 16, color: Color(0xFF1976D2)),
           const SizedBox(width: 6),
           Text(
-            'Kelas: $classId',
+            'Kelas $grade $className',
             style: const TextStyle(
               fontSize: 11,
               color: Color(0xFF1976D2),

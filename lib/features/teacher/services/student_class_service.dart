@@ -51,6 +51,16 @@ class StudentClassService {
       throw ('Siswa dengan NIS ini sudah terdaftar di kelas');
     }
 
+    // Ambil data kelas (grade & className)
+    final classDoc = await _teachers
+        .doc(teacherId)
+        .collection('classes')
+        .doc(classId)
+        .get();
+    final classData = classDoc.data();
+    final grade = classData != null ? classData['grade'] : null;
+    final className = classData != null ? classData['className'] : null;
+
     final newClassDataRef = _teachers
         .doc(teacherId)
         .collection('classes')
@@ -70,9 +80,12 @@ class StudentClassService {
     await _firestore.collection('student_index').doc(nis).set({
       'nis': nis,
       'studentName': studentName,
+      'photoUrl': photoUrl,
       'teacherId': teacherId,
       'classId': classId,
       'studentId': newClassDataRef.id,
+      'grade': grade,
+      'className': className,
     });
   }
 

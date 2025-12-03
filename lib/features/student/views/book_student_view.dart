@@ -169,12 +169,10 @@ class _ChatCallout extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: Ganti pake AppRoutes.chatStudent yang bener
         GlobalNavigator.pushNamed(
           AppRoutes.chatStudent,
           arguments: {'teacherId': teacherId, 'studentId': studentId},
         );
-        debugPrint("Chat diklik! Guru: $teacherId, Siswa: $studentId");
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

@@ -62,13 +62,19 @@ class AuthStudentService {
       // STEP 2 — AMBIL DATA SISWA (OPSIONAL, BUAT TAMPILAN AJA)
       final teacherId = indexData['teacherId'];
       final classId = indexData['classId'];
+      final photoUrl = indexData['photoUrl'];
+      final grade = indexData['grade'];
+      final className = indexData['className'];
 
       return {
         'studentName': indexData['studentName'],
         'nis': indexData['nis'],
+        'photoUrl': photoUrl,
         'classId': classId,
         'teacherId': teacherId,
         'studentId': savedUid,
+        'grade': grade,
+        'className': className,
         // Balikin data lain kalo perlu
       };
     } catch (e, stack) {
