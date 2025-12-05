@@ -15,7 +15,8 @@ class _MainStudentViewState extends State<MainStudentView> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Provider.of<AuthStudentViewmodel>(
         context,
         listen: false,
