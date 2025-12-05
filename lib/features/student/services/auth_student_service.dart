@@ -61,6 +61,7 @@ class AuthStudentService {
 
       // STEP 2 — AMBIL DATA SISWA (OPSIONAL, BUAT TAMPILAN AJA)
       final teacherId = indexData['teacherId'];
+      final teacherName = indexData['teacherName'];
       final classId = indexData['classId'];
       final photoUrl = indexData['photoUrl'];
       final grade = indexData['grade'];
@@ -72,6 +73,7 @@ class AuthStudentService {
         'photoUrl': photoUrl,
         'classId': classId,
         'teacherId': teacherId,
+        'teacherName': teacherName,
         'studentId': savedUid,
         'grade': grade,
         'className': className,

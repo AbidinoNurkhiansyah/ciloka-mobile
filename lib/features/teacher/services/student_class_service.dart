@@ -6,7 +6,8 @@ class StudentClassService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  CollectionReference get _teachers => _firestore.collection('teachers');
+  CollectionReference<Map<String, dynamic>> get _teachers =>
+      _firestore.collection('teachers');
 
   Future<bool> isNisExist(String classId, String nis) async {
     final user = _auth.currentUser;
@@ -52,14 +53,22 @@ class StudentClassService {
     }
 
     // Ambil data kelas (grade & className)
-    final classDoc = await _teachers
+    DocumentSnapshot<Map<String, dynamic>> classDoc = await _teachers
         .doc(teacherId)
         .collection('classes')
         .doc(classId)
         .get();
+
     final classData = classDoc.data();
-    final grade = classData != null ? classData['grade'] : null;
-    final className = classData != null ? classData['className'] : null;
+
+    final grade = classData?['grade'];
+    final className = classData?['className'];
+    // Ambil teacherName dari dokumen guru (bukan dari kelas)
+    DocumentSnapshot<Map<String, dynamic>> teacherDoc = await _teachers
+        .doc(teacherId)
+        .get();
+    final teacherData = teacherDoc.data();
+    final teacherName = teacherData?['username'];
 
     final newClassDataRef = _teachers
         .doc(teacherId)
@@ -84,6 +93,7 @@ class StudentClassService {
       'teacherId': teacherId,
       'classId': classId,
       'studentId': newClassDataRef.id,
+      'teacherName': teacherName,
       'grade': grade,
       'className': className,
     });
