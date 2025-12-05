@@ -7,10 +7,7 @@ import '../../../../widgets/game_feedback_overlay.dart';
 class PengejaanView extends StatefulWidget {
   final int levelNumber;
 
-  const PengejaanView({
-    super.key,
-    required this.levelNumber,
-  });
+  const PengejaanView({super.key, required this.levelNumber});
 
   @override
   _PengejaanViewState createState() => _PengejaanViewState();
@@ -24,15 +21,6 @@ class _PengejaanViewState extends State<PengejaanView> {
   bool _isCorrect = false;
   bool _showCorrectOverlay = false;
   bool _showWrongOverlay = false;
-
-  final List<Color> _boxColors = const [
-    Color(0xFFFFD966),
-    Color(0xFFFF9999),
-    Color(0xFF99CCFF),
-    Color(0xFFB3E6B3),
-    Color(0xFFCC99FF),
-    Color(0xFF66FF99),
-  ];
 
   @override
   void initState() {
@@ -78,8 +66,8 @@ class _PengejaanViewState extends State<PengejaanView> {
     });
 
     bool available = await _speech.initialize(
-      onError: (error) => print("Speech Error: ${error.errorMsg}"),
-      onStatus: (status) => print("Speech Status: $status"),
+      onError: (error) => debugPrint("Speech Error: ${error.errorMsg}"),
+      onStatus: (status) => debugPrint("Speech Status: $status"),
     );
 
     if (available) {
@@ -97,7 +85,7 @@ class _PengejaanViewState extends State<PengejaanView> {
       );
     } else {
       setState(() => _isListening = false);
-      print("Layanan Speech Recognition tidak tersedia");
+      debugPrint("Layanan Speech Recognition tidak tersedia");
     }
   }
 
@@ -141,16 +129,16 @@ class _PengejaanViewState extends State<PengejaanView> {
 
   // 🔠 Kotak Huruf (PERSIS seperti kode awalmu)
   Widget _buildLetterBox(int index) {
-    String letter =
-        index < _spokenText.length ? _spokenText[index].toUpperCase() : "";
-    Color boxColor = _boxColors[index % _boxColors.length];
+    String letter = index < _spokenText.length
+        ? _spokenText[index].toUpperCase()
+        : "";
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: boxColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: const [
@@ -160,11 +148,17 @@ class _PengejaanViewState extends State<PengejaanView> {
       alignment: Alignment.center,
       child: Text(
         letter,
-        style: const TextStyle(
-          fontFamily: 'Nunito',
+        style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: Color(0xff1e1e1e),
+          shadows: [
+            Shadow(
+              color: Colors.grey.shade400,
+              offset: Offset(1, 1),
+              blurRadius: 1,
+            ),
+          ],
         ),
       ),
     );
@@ -180,10 +174,10 @@ class _PengejaanViewState extends State<PengejaanView> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha: 0.5),
             blurRadius: 16,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
     );
@@ -203,7 +197,7 @@ class _PengejaanViewState extends State<PengejaanView> {
         } else if (isActive) {
           color = const Color(0xFF34C759);
         } else {
-          color = Colors.white.withOpacity(0.7);
+          color = Colors.white.withValues(alpha: 0.7);
         }
 
         return Padding(
@@ -227,9 +221,9 @@ class _PengejaanViewState extends State<PengejaanView> {
   // -------------- APP BAR CUSTOM ----------------------
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
@@ -240,10 +234,10 @@ class _PengejaanViewState extends State<PengejaanView> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ],
               ),
               child: const Icon(
@@ -253,10 +247,11 @@ class _PengejaanViewState extends State<PengejaanView> {
               ),
             ),
           ),
+          SizedBox(width: 16),
           Column(
             children: [
-              const Text(
-                'LATIHAN MENG-EJA',
+              Text(
+                'Latihan Membaca',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -267,25 +262,6 @@ class _PengejaanViewState extends State<PengejaanView> {
               const SizedBox(height: 4),
               _buildLevelDots(),
             ],
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                )
-              ],
-            ),
-            child: const Icon(
-              Icons.volume_up_rounded,
-              color: Color(0xFF1E98F5),
-              size: 20,
-            ),
           ),
         ],
       ),
@@ -299,14 +275,10 @@ class _PengejaanViewState extends State<PengejaanView> {
     return Scaffold(
       body: Stack(
         children: [
-          // BACKGROUND: langit + bentuk bulat-bulat
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF6BCBFF),
-                  Color(0xFFB8E5FF),
-                ],
+                colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -315,12 +287,12 @@ class _PengejaanViewState extends State<PengejaanView> {
           Positioned(
             top: -80,
             left: -60,
-            child: _bubble(140, const Color(0xFF92D8FF).withOpacity(0.7)),
+            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
           ),
           Positioned(
             top: 40,
             right: -40,
-            child: _bubble(110, const Color(0xFFFAE27C).withOpacity(0.8)),
+            child: _bubble(110, const Color(0xFFFAE27C).withValues(alpha: 0.8)),
           ),
           // RUMPUT + HILL
           Align(
@@ -357,9 +329,8 @@ class _PengejaanViewState extends State<PengejaanView> {
                         children: [
                           const SizedBox(height: 10),
 
-                          // --- KARTU DARI KODE AWALMU (TIDAK DIUBAH) ---
                           Container(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
@@ -376,7 +347,6 @@ class _PengejaanViewState extends State<PengejaanView> {
                                 Text(
                                   _targetWord.toUpperCase(),
                                   style: const TextStyle(
-                                    fontFamily: 'Nunito',
                                     fontSize: 30,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 4,
@@ -391,28 +361,30 @@ class _PengejaanViewState extends State<PengejaanView> {
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    // TODO: play audio
-                                  },
-                                  icon: const Icon(Icons.volume_up, color: Colors.white),
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.volume_up,
+                                    color: Colors.white,
+                                  ),
                                   label: const Text(
                                     "Klik untuk Mendengar",
                                     style: TextStyle(
-                                      fontFamily: 'Nunito',
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 20),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(
-                                    targetLength,
-                                    (index) => _buildLetterBox(index),
-                                  ),
-                                ),
                               ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              children: List.generate(
+                                targetLength,
+                                (index) => _buildLetterBox(index),
+                              ),
                             ),
                           ),
 
@@ -420,7 +392,9 @@ class _PengejaanViewState extends State<PengejaanView> {
 
                           // --- Tombol Mic ---
                           GestureDetector(
-                            onTap: _isListening ? _stopListening : _startListening,
+                            onTap: _isListening
+                                ? _stopListening
+                                : _startListening,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               height: 100,
@@ -454,10 +428,9 @@ class _PengejaanViewState extends State<PengejaanView> {
                             _isListening
                                 ? "Mendengarkan..."
                                 : _spokenText.isEmpty
-                                    ? "Tekan Mic untuk Mengeja"
-                                    : "Kamu berkata: $_spokenText",
+                                ? "Tekan Mic untuk Membaca"
+                                : "Kamu berkata: $_spokenText",
                             style: const TextStyle(
-                              fontFamily: 'Nunito',
                               fontSize: 16,
                               color: Colors.black87,
                             ),
@@ -489,7 +462,6 @@ class _PengejaanViewState extends State<PengejaanView> {
                                     child: const Text(
                                       "Cek Jawaban",
                                       style: TextStyle(
-                                        fontFamily: 'Nunito',
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -511,7 +483,6 @@ class _PengejaanViewState extends State<PengejaanView> {
                                 child: const Text(
                                   "Ulangi",
                                   style: TextStyle(
-                                    fontFamily: 'Nunito',
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -530,8 +501,7 @@ class _PengejaanViewState extends State<PengejaanView> {
             ),
           ),
 
-          if (_showCorrectOverlay)
-            CorrectOverlay(onContinue: _goToNextGame),
+          if (_showCorrectOverlay) CorrectOverlay(onContinue: _goToNextGame),
           if (_showWrongOverlay)
             IncorrectOverlay(
               correctAnwerText: _targetWord,

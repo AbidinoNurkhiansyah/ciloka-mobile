@@ -166,12 +166,12 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           Positioned(
             top: -80,
             left: -60,
-            child: _bubble(140, const Color(0xFF92D8FF).withOpacity(0.7)),
+            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
           ),
           Positioned(
             top: 40,
             right: -40,
-            child: _bubble(110, const Color(0xFFFAE27C).withOpacity(0.8)),
+            child: _bubble(110, const Color(0xFFFAE27C).withValues(alpha: 0.8)),
           ),
 
           Positioned(
@@ -218,13 +218,15 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           _buildFeedbackOverlay(),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          width: double.infinity,
-          child: _buildCheckButton(), // tetap gunakan tombol animasi kamu
-        ),
-      ),
+      floatingActionButton: status == 2
+          ? null
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: _buildCheckButton(), // tetap gunakan tombol animasi kamu
+              ),
+            ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
@@ -235,12 +237,13 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           _circleButton(
             icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
+          SizedBox(width: 16),
           Column(
             children: [
               const Text(
@@ -255,12 +258,6 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
               const SizedBox(height: 4),
               _buildLevelDots(),
             ],
-          ),
-          _circleButton(
-            icon: Icons.volume_up_rounded,
-            onTap: () {
-              // TODO: suara
-            },
           ),
         ],
       ),
@@ -277,7 +274,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.18),
+              color: Colors.black.withValues(alpha: 0.18),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -301,7 +298,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
         } else if (isActive) {
           color = const Color(0xFF34C759);
         } else {
-          color = Colors.white.withOpacity(0.7);
+          color = Colors.white.withValues(alpha: 0.7);
         }
 
         return Padding(
@@ -327,11 +324,11 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -351,7 +348,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.35),
+                  color: Colors.orange.withValues(alpha: 0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -380,6 +377,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                   ),
                 ),
                 const SizedBox(height: 6),
+
                 Row(
                   children: [
                     Icon(
@@ -387,16 +385,11 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                       size: 20,
                       color: Colors.amber.shade400,
                     ),
-                    Icon(
-                      Icons.star_rounded,
-                      size: 20,
-                      color: Colors.amber.shade400,
-                    ),
-                    Icon(
-                      Icons.star_rounded,
-                      size: 20,
-                      color: Colors.grey.shade300,
-                    ),
+                    Icon(Icons.star_rounded, size: 20, color: Colors.grey[300]),
+                    Icon(Icons.star_rounded, size: 20, color: Colors.grey[300]),
+                    Icon(Icons.star_rounded, size: 20, color: Colors.grey[300]),
+                    Icon(Icons.star_rounded, size: 20, color: Colors.grey[300]),
+
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -450,7 +443,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -546,7 +539,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 3,
                         offset: const Offset(0, 1),
                       ),
@@ -564,7 +557,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                     child: Text(
                       letter?.char ?? '',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Color(0xff1e1e1e),
                         fontSize: tileSize * 0.5,
                         fontWeight: FontWeight.bold,
                         shadows: letter != null
@@ -624,11 +617,11 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.97),
+          color: Colors.white.withValues(alpha: 0.97),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -675,18 +668,21 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.blueAccent.withOpacity(0.4),
+              color: Colors.blueAccent.withValues(alpha: 0.4),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
             if (!isDragging)
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
           ],
-          border: Border.all(color: Colors.white.withOpacity(0.7), width: 2),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.7),
+            width: 2,
+          ),
         ),
         child: Text(
           char,
@@ -725,7 +721,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.green.shade800.withOpacity(0.4),
+              color: Colors.green.shade800.withValues(alpha: 0.4),
 
               blurRadius: 12,
               offset: const Offset(0, 4),
@@ -763,7 +759,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha: 0.5),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
