@@ -1,6 +1,6 @@
 import 'package:ciloka_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- Impor yang BENAR untuk HapticFeedback
+import 'package:flutter/services.dart';
 
 import '../../../../widgets/game_feedback_overlay.dart';
 
@@ -16,10 +16,7 @@ class _LetterTile {
 class LatihanMenulisView extends StatefulWidget {
   final int levelNumber;
 
-  const LatihanMenulisView({
-    super.key,
-    required this.levelNumber,
-  });
+  const LatihanMenulisView({super.key, required this.levelNumber});
 
   @override
   State<LatihanMenulisView> createState() => _LatihanMenulisViewState();
@@ -31,6 +28,10 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
   late String correctAnswer;
   late List<_LetterTile> availableLetters;
   late List<_LetterTile?> slotLetters;
+
+  bool get hasSelectedLetters {
+    return slotLetters.any((e) => e != null);
+  }
 
   @override
   void initState() {
@@ -136,9 +137,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
 
   Widget _buildFeedbackOverlay() {
     if (status == 2) {
-      return CorrectOverlay(
-        onContinue: _goToNextGame,
-      );
+      return CorrectOverlay(onContinue: _goToNextGame);
     } else if (status == 3) {
       return IncorrectOverlay(
         correctAnwerText: correctAnswer,
@@ -174,25 +173,16 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
             right: -40,
             child: _bubble(110, const Color(0xFFFAE27C).withOpacity(0.8)),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 150,
-              decoration: const BoxDecoration(
-                color: Color(0xFF6DD17C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
-              ),
-            ),
-          ),
+
           Positioned(
             bottom: 90,
             left: -40,
-            child: _bubble(120, const Color(0xFF63C96C)),
+            child: _bubble(120, const Color(0xFFFAE27C)),
           ),
           Positioned(
-            bottom: 70,
+            bottom: 20,
             right: -30,
-            child: _bubble(100, const Color(0xFF59C263)),
+            child: _bubble(100, const Color(0xFFFAE27C)),
           ),
 
           SafeArea(
@@ -203,7 +193,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Column(
                         children: [
                           const SizedBox(height: 10),
@@ -216,9 +206,6 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                           _buildHintText(),
                           const SizedBox(height: 18),
                           _buildLetterPool(),
-                          const SizedBox(height: 26),
-                          _buildCheckButton(),
-                          const SizedBox(height: 26),
                         ],
                       ),
                     ),
@@ -231,13 +218,22 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           _buildFeedbackOverlay(),
         ],
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SizedBox(
+          width: double.infinity,
+          child: _buildCheckButton(), // tetap gunakan tombol animasi kamu
+        ),
+      ),
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
   // -------------- APP BAR ----------------------
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -248,7 +244,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           Column(
             children: [
               const Text(
-                'LATIHAN MENULIS',
+                'Melengkapi Kalimat',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -284,14 +280,10 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
               color: Colors.black.withOpacity(0.18),
               blurRadius: 6,
               offset: const Offset(0, 3),
-            )
+            ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFF1E98F5),
-          size: 20,
-        ),
+        child: Icon(icon, color: const Color(0xFF1E98F5), size: 20),
       ),
     );
   }
@@ -333,16 +325,16 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
   // -------------- HEADER -----------------
   Widget _buildHeaderCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.96),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.12),
             blurRadius: 12,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -390,12 +382,27 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.star_rounded, size: 20, color: Colors.amber.shade400),
-                    Icon(Icons.star_rounded, size: 20, color: Colors.amber.shade400),
-                    Icon(Icons.star_rounded, size: 20, color: Colors.grey.shade300),
+                    Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: Colors.amber.shade400,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: Colors.amber.shade400,
+                    ),
+                    Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: Colors.grey.shade300,
+                    ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F5FF),
                         borderRadius: BorderRadius.circular(12),
@@ -415,9 +422,13 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: slotLetters.where((e) => e != null).length / slotLetters.length,
+                    value:
+                        slotLetters.where((e) => e != null).length /
+                        slotLetters.length,
                     backgroundColor: const Color(0xFFE5F2FF),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4CD964)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF4CD964),
+                    ),
                     minHeight: 8,
                   ),
                 ),
@@ -431,71 +442,36 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
 
   // -------------- SOAL -------------------
   Widget _buildQuestionCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF4FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.menu_book_rounded,
-              color: Color(0xFF1E98F5),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _getQuestion(),
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                color: Color(0xFF444444),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
+      child: Text(
+        _getQuestion(),
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.5,
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
   // -------------- PAPAN TULIS -------------------
- // -------------- PAPAN TULIS (FIXED: No Overflow + Responsive) -------------------
-Widget _buildChalkboard() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: const Color(0xFF1A4A2E),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: const Color(0xFF5D3A1A), width: 8),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
-        )
-      ],
-    ),
-    child: LayoutBuilder(
+  // -------------- PAPAN TULIS (FIXED: No Overflow + Responsive) -------------------
+  Widget _buildChalkboard() {
+    return LayoutBuilder(
       builder: (context, constraints) {
         final totalSlots = slotLetters.length;
         const minSpacing = 6.0;
@@ -503,79 +479,88 @@ Widget _buildChalkboard() {
 
         // Hitung total lebar minimum yang dibutuhkan
         final availableWidth = constraints.maxWidth;
-        final totalMinWidth = (minTileSize * totalSlots) + (minSpacing * (totalSlots - 1));
+        final totalMinWidth =
+            (minTileSize * totalSlots) + (minSpacing * (totalSlots - 1));
 
         if (totalMinWidth <= availableWidth) {
           // Cukup lebar → pakai ukuran normal
           return _buildSlotRow(tileSize: minTileSize, spacing: minSpacing);
         } else {
           // Terlalu sempit → kurangi ukuran tile agar pas
-          final calculatedTileSize = (availableWidth - (minSpacing * (totalSlots - 1))) / totalSlots;
+          final calculatedTileSize =
+              (availableWidth - (minSpacing * (totalSlots - 1))) / totalSlots;
           final tileSize = calculatedTileSize.clamp(24.0, minTileSize);
           return _buildSlotRow(tileSize: tileSize, spacing: minSpacing);
         }
       },
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildSlotRow({required double tileSize, required double spacing}) {
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(slotLetters.length, (index) {
-          final letter = slotLetters[index];
-          return Padding(
-            padding: EdgeInsets.symmetric(horizontal: spacing / 2),
-            child: SizedBox(
-              width: tileSize,
-              height: tileSize,
-              child: DragTarget<_LetterTile>(
-                onWillAccept: (data) => true,
-                onAccept: (tile) {
-                  setState(() {
-                    if (slotLetters[index] != null) {
-                      availableLetters.add(slotLetters[index]!);
-                    }
-                    slotLetters[index] = tile;
-                    availableLetters.removeWhere((t) => t.id == tile.id);
-                  });
-                },
-                builder: (context, candidateData, rejectedData) {
-                  final isHovering = candidateData.isNotEmpty;
-                  final bgColors = letter != null
-                      ? const [Colors.white, Colors.white]
-                      : (isHovering
+  Widget _buildSlotRow({required double tileSize, required double spacing}) {
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      children: List.generate(slotLetters.length, (index) {
+        final letter = slotLetters[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: SizedBox(
+            width: tileSize,
+            height: tileSize,
+            child: DragTarget<_LetterTile>(
+              onWillAccept: (data) => true,
+              onAccept: (tile) {
+                setState(() {
+                  if (slotLetters[index] != null) {
+                    availableLetters.add(slotLetters[index]!);
+                  }
+                  slotLetters[index] = tile;
+                  availableLetters.removeWhere((t) => t.id == tile.id);
+                });
+              },
+              builder: (context, candidateData, rejectedData) {
+                final isHovering = candidateData.isNotEmpty;
+                final bgColors = letter != null
+                    ? const [Colors.white, Colors.white]
+                    : (isHovering
                           ? [Colors.yellowAccent.shade100, Colors.white]
-                          : [Colors.grey.shade300, Colors.grey.shade400]);
+                          : [Colors.grey.shade300, Colors.grey.shade200]);
 
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: bgColors,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: letter != null
-                            ? Colors.green.shade600
-                            : (isHovering ? Colors.yellow.shade700 : Colors.grey.shade500),
-                        width: letter != null ? 2 : 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        )
-                      ],
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: bgColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: letter != null
+                          ? Colors.green.shade600
+                          : (isHovering
+                                ? Colors.yellow.shade700
+                                : Colors.grey.shade500),
+                      width: letter != null ? 2 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (letter != null) {
+                        setState(() {
+                          availableLetters.add(letter); // kembalikan ke pool
+                          slotLetters[index] = null; // kosongkan slot
+                        });
+                      }
+                    },
                     child: Text(
                       letter?.char ?? '',
                       style: TextStyle(
@@ -583,33 +568,48 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
                         fontSize: tileSize * 0.5,
                         fontWeight: FontWeight.bold,
                         shadows: letter != null
-                            ? [Shadow(color: Colors.grey.shade400, offset: Offset(1, 1), blurRadius: 1)]
+                            ? [
+                                Shadow(
+                                  color: Colors.grey.shade400,
+                                  offset: Offset(1, 1),
+                                  blurRadius: 1,
+                                ),
+                              ]
                             : null,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          );
-        }),
-      ),
-    ],
-  );
-}
+          ),
+        );
+      }),
+    );
+  }
+
   // -------------- PETUNJUK -----------------
   Widget _buildHintText() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bool showReturnHint = hasSelectedLetters;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
-        Icon(Icons.touch_app_rounded, size: 18, color: Color(0xFF2873FF)),
+      children: [
+        Icon(Icons.touch_app_rounded, size: 18, color: colorScheme.onSurface),
         SizedBox(width: 6),
-        Text(
-          'Seret huruf ke kotak di papan tulis',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2873FF),
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Text(
+              showReturnHint
+                  ? 'Klik huruf untuk mengembalikannya'
+                  : 'Seret huruf ke kotak di papan tulis',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface,
+              ),
+            ),
           ),
         ),
       ],
@@ -618,32 +618,42 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
 
   // -------------- POOL HURUF --------------------
   Widget _buildLetterPool() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.97),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Center(
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          children: availableLetters.map((tile) {
-            return Draggable<_LetterTile>(
-              data: tile,
-              feedback: Transform.scale(scale: 1.2, child: _buildLetterTile(tile.char, isDragging: true)),
-              childWhenDragging: Opacity(opacity: 0.3, child: _buildLetterTile(tile.char)),
-              child: _buildLetterTile(tile.char),
-            );
-          }).toList(),
+    return AnimatedOpacity(
+      opacity: availableLetters.isEmpty ? 0 : 1,
+      duration: const Duration(milliseconds: 250),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.97),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            children: availableLetters.map((tile) {
+              return Draggable<_LetterTile>(
+                data: tile,
+                feedback: Transform.scale(
+                  scale: 1.2,
+                  child: _buildLetterTile(tile.char, isDragging: true),
+                ),
+                childWhenDragging: Opacity(
+                  opacity: 0.3,
+                  child: _buildLetterTile(tile.char),
+                ),
+                child: _buildLetterTile(tile.char),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -684,7 +694,13 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
             fontSize: 26,
             fontWeight: FontWeight.w900,
             color: Colors.white,
-            shadows: [Shadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 2)],
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(1, 1),
+                blurRadius: 2,
+              ),
+            ],
           ),
         ),
       ),
@@ -693,24 +709,6 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
 
   // -------------- TOMBOL CEK --------------------
   Widget _buildCheckButton() {
-    Color bgStart, bgEnd, textColor;
-    switch (status) {
-      case 2:
-        bgStart = const Color(0xFF4CD964);
-        bgEnd = const Color(0xFF34C759);
-        textColor = Colors.white;
-        break;
-      case 3:
-        bgStart = const Color(0xFFFF6B6B);
-        bgEnd = const Color(0xFFD32F2F);
-        textColor = Colors.white;
-        break;
-      default:
-        bgStart = const Color(0xFF4CD964);
-        bgEnd = const Color(0xFF34C759);
-        textColor = Colors.white;
-    }
-
     return GestureDetector(
       onTap: _checkAnswer,
       child: AnimatedContainer(
@@ -720,41 +718,35 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [bgStart, bgEnd],
+            colors: [Color(0xFF4CD964), Color(0xFF34C759)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: status == 2
-                  ? Colors.green.shade800.withOpacity(0.4)
-                  : (status == 3 ? Colors.red.shade800.withOpacity(0.4) : Colors.green.shade800.withOpacity(0.4)),
+              color: Colors.green.shade800.withOpacity(0.4),
+
               blurRadius: 12,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              status == 2 ? Icons.check_circle : (status == 3 ? Icons.error : Icons.check_rounded),
-              color: textColor,
-              size: 22,
-            ),
-            const SizedBox(width: 10),
             Text(
-              status == 2
-                  ? 'Benar! Lanjut ke Level Berikutnya'
-                  : (status == 3 ? 'Coba Lagi!' : 'Cek Jawaban'),
+              ('Cek Jawaban'),
               style: TextStyle(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w900,
-                color: textColor,
+                color: Colors.white,
                 letterSpacing: 1.0,
               ),
             ),
+            const SizedBox(width: 10),
+
+            Icon(Icons.check_rounded, color: Colors.white, size: 22),
           ],
         ),
       ),
@@ -774,7 +766,7 @@ Widget _buildSlotRow({required double tileSize, required double spacing}) {
             color: color.withOpacity(0.5),
             blurRadius: 16,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
     );

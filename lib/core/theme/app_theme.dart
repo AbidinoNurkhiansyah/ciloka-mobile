@@ -8,7 +8,7 @@ class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: Color(0xFFB0DAFD),
       primary: Color(0xFFB0DAFD),
-      onPrimary: Colors.black,
+      onPrimary: Color(0xff1e1e1e),
       secondary: Color(0xFF0090D4),
       surface: Color(0xFF2ACCF0),
       onSurface: Colors.white,
