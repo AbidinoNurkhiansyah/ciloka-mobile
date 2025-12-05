@@ -12,6 +12,19 @@ class AuthStudentService {
     : _firestore = firestore ?? FirebaseFirestore.instance,
       _auth = auth ?? FirebaseAuth.instance;
 
+  Future<Map<String, dynamic>?> fetchStudentProfile(String nis) async {
+    try {
+      final query = await _firestore.collection('student_index').doc(nis).get();
+
+      if (!query.exists) return null;
+
+      return query.data();
+    } catch (e) {
+      debugPrint("❌ ERROR fetchStudentProfile: $e");
+      return null;
+    }
+  }
+
   // Ganti nama jadi loginStudent biar gak bingung
   Future<Map<String, dynamic>?> loginStudent({
     required String studentName,

@@ -2,8 +2,26 @@ import 'package:ciloka_app/features/student/viewmodels/navigation_student_viewmo
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class MainStudentView extends StatelessWidget {
+import '../viewmodels/auth_student_viewmodel.dart';
+
+class MainStudentView extends StatefulWidget {
   const MainStudentView({super.key});
+
+  @override
+  State<MainStudentView> createState() => _MainStudentViewState();
+}
+
+class _MainStudentViewState extends State<MainStudentView> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      Provider.of<AuthStudentViewmodel>(
+        context,
+        listen: false,
+      ).loadStudentProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

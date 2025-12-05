@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ciloka_app/core/theme/app_spacing.dart';
 import 'package:ciloka_app/features/student/models/user_student_model.dart';
 import 'package:ciloka_app/features/student/services/student_service.dart';
@@ -6,6 +7,7 @@ import 'package:ciloka_app/features/student/viewmodels/navigation_student_viewmo
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileStudentView extends StatelessWidget {
   const ProfileStudentView({super.key});
@@ -68,8 +70,10 @@ class ProfileStudentView extends StatelessWidget {
                   ),
                   child: student.photoUrl.isNotEmpty
                       ? ClipOval(
-                          child: Image.network(
-                            student.photoUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: student.photoUrl,
+                            errorWidget: (context, url, error) =>
+                                CircularProgressIndicator(),
                             fit: BoxFit.cover,
                           ),
                         )
@@ -81,19 +85,13 @@ class ProfileStudentView extends StatelessWidget {
                 ),
                 AppSpacing.vMd,
                 Text(
-                  student.username,
+                  student.studentName,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                AppSpacing.vSm,
-                Text(
-                  student.email,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
+
                 AppSpacing.vLg,
                 // Stats card
                 Container(
@@ -204,19 +202,19 @@ class ProfileStudentView extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
-                // final prefs = await SharedPreferences.getInstance();
-                // await prefs.clear();
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
+                await Provider.of<AuthStudentViewmodel>(
+                  context,
+                  listen: false,
+                ).logout(context);
 
                 // Reset navigation index ke beranda
                 Provider.of<NavigationStudentViewModel>(
                   context,
                   listen: false,
                 ).setIndexBottomNavbar(0);
-
-                await Provider.of<AuthStudentViewmodel>(
-                  context,
-                  listen: false,
-                ).logout(context);
               },
               child: Text('Ya'),
             ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/auth_student_service.dart';
 
@@ -30,6 +31,19 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
   void updateService(AuthStudentService service) {
     _studentService = service;
+  }
+
+  Future<void> loadStudentProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nis = prefs.getString('logged_nis');
+
+    if (nis == null) return;
+
+    final profile = await _studentService.fetchStudentProfile(nis);
+    if (profile != null) {
+      studentProfile = profile;
+      notifyListeners();
+    }
   }
 
   FirebaseAuthStatus _status = FirebaseAuthStatus.unauthenticated;
@@ -81,6 +95,9 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
             await Future.delayed(const Duration(milliseconds: 400));
             GlobalNavigator.pushReplacementNamed(AppRoutes.mainStudent);
+
+            final prefs = await SharedPreferences.getInstance();
+            prefs.setString('logged_nis', nis);
           }
         });
 

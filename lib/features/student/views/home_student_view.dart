@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ciloka_app/core/theme/app_spacing.dart';
 import 'package:ciloka_app/features/student/models/level_model.dart';
 import 'package:ciloka_app/features/student/models/user_student_model.dart';
@@ -126,7 +127,7 @@ class _HomeStudentViewState extends State<HomeStudentView> {
             radius: 36,
             backgroundColor: Colors.white.withOpacity(0.3),
             backgroundImage: student.photoUrl.isNotEmpty
-                ? NetworkImage(student.photoUrl)
+                ? CachedNetworkImageProvider(student.photoUrl)
                 : null,
             child: student.photoUrl.isEmpty
                 ? const Text("😊", style: TextStyle(fontSize: 32))
