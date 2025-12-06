@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'package:ciloka_app/core/routes/app_routes.dart';
@@ -22,11 +23,122 @@ class _PengejaanViewState extends State<PengejaanView> {
   bool _showCorrectOverlay = false;
   bool _showWrongOverlay = false;
 
+  final FlutterTts flutterTts = FlutterTts();
+
+  String? currentWord; // kata yang sedang dibacakan
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _loadSoal();
+    _resetGame();
+
+    flutterTts.awaitSpeakCompletion(true); // penting supaya progress keluar
+
+    flutterTts.setProgressHandler((
+      String text,
+      int start,
+      int end,
+      String word,
+    ) {
+      if (word.trim().isEmpty) return; // cegah highlight aneh
+      setState(() => currentWord = word);
+
+      // Auto-scroll ke kata yang sedang dibacakan
+      _scrollToWord(word);
+    });
+
+    // completion handler untuk reset highlight
+    flutterTts.setCompletionHandler(() {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() {
+            currentWord = null;
+          });
+        }
+      });
+
+      debugPrint("TTS selesai → highlight direset");
+    });
+  }
+
+  void _scrollToWord(String word) {
+    if (_targetWord.isEmpty) return;
+
+    final words = _targetWord.split(" ");
+    // normalisasi semua kata
+    final normalizedWords = words.map(normalize).toList();
+
+    // cari index pertama yang mengandung 'word' atau sama persis
+    int index = normalizedWords.indexWhere(
+      (w) => w == word || w.contains(word) || word.contains(w),
+    );
+
+    if (index == -1) {
+      // kalau belum ketemu, coba cari kata terdekat (misalnya partial match)
+      index = normalizedWords.indexWhere((w) => w.contains(word));
+    }
+
+    if (index == -1) return;
+
+    final position = index * 40.0;
+    _scrollController.animateTo(
+      position,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Future<void> _checkAndSpeak() async {
+    // Ambil daftar bahasa yang tersedia di device
+    List<dynamic> languages = await flutterTts.getLanguages;
+
+    // Debug: print semua bahasa
+    debugPrint("Bahasa tersedia: $languages");
+
+    // Cek apakah bahasa Indonesia ada
+    bool isAvailable = await flutterTts.isLanguageAvailable("id-ID");
+
+    if (isAvailable) {
+      await flutterTts.setLanguage("id-ID");
+      await flutterTts.setSpeechRate(0.2);
+      await flutterTts.awaitSpeakCompletion(true);
+      // SET soal dulu
+      _loadSoal();
+
+      // Pre-process soal untuk dibacakan
+      final textToSpeak = preprocessText(_targetWord);
+      await flutterTts.speak(textToSpeak); // pakai soal biar sinkron
+    } else {
+      // Kalau tidak tersedia, kasih fallback
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.speak(
+        "Bahasa Indonesia tidak tersedia di perangkat ini.",
+      );
+    }
+  }
+
+  String preprocessText(String text) {
+    // Ganti ellipsis "..." dengan kata "titik titik titik"
+    String result = text
+        .replaceAll("...", "titik titik titik")
+        .replaceAll(".", "")
+        .replaceAll(",", "");
+
+    // Bisa juga ganti tanda baca lain kalau mau
+    result = result.replaceAll("?", "tanda tanya");
+    result = result.replaceAll("!", "tanda seru");
+
+    return result;
+  }
+
+  String normalize(String word) {
+    return word.toLowerCase().replaceAll(
+      RegExp(r'[^\w\s]'),
+      '',
+    ); // buang tanda baca
   }
 
   void _loadSoal() {
@@ -49,7 +161,6 @@ class _PengejaanViewState extends State<PengejaanView> {
       default:
         _targetWord = "hewan";
     }
-    _resetGame();
   }
 
   void _startListening() async {
@@ -223,7 +334,7 @@ class _PengejaanViewState extends State<PengejaanView> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
@@ -247,7 +358,6 @@ class _PengejaanViewState extends State<PengejaanView> {
               ),
             ),
           ),
-          SizedBox(width: 16),
           Column(
             children: [
               Text(
@@ -263,7 +373,36 @@ class _PengejaanViewState extends State<PengejaanView> {
               _buildLevelDots(),
             ],
           ),
+          _circleButton(
+            icon: Icons.volume_up_rounded,
+            onTap: () async {
+              await _checkAndSpeak();
+
+              debugPrint('speech aktif');
+            },
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: const Color(0xFF1E98F5), size: 20),
       ),
     );
   }
@@ -321,179 +460,170 @@ class _PengejaanViewState extends State<PengejaanView> {
               children: [
                 _buildAppBar(context),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 10),
-
-                          Container(
-                            padding: const EdgeInsets.all(18),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16.0,
+                              ),
+                              child: _buildTargetWord(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.touch_app_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16.0,
+                                ),
+                                child: Text(
+                                  'Klik speaker di atas untuk mendengar',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            children: List.generate(
+                              targetLength,
+                              (index) => _buildLetterBox(index),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // --- Tombol Mic ---
+                        GestureDetector(
+                          onTap: _isListening
+                              ? _stopListening
+                              : _startListening,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            height: 100,
+                            width: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _isListening
+                                  ? Colors.lightGreen
+                                  : Colors.pinkAccent,
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 5,
-                                  offset: Offset(0, 3),
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
                                 ),
                               ],
                             ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _targetWord.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 4,
-                                    color: Colors.pinkAccent,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                ElevatedButton.icon(
+                            child: Center(
+                              child: Icon(
+                                _isListening ? Icons.hearing : Icons.mic,
+                                color: Colors.white,
+                                size: 40,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Text(
+                          _isListening
+                              ? "Mendengarkan..."
+                              : _spokenText.isEmpty
+                              ? "Tekan Mic untuk Membaca"
+                              : "Kamu berkata: $_spokenText",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // --- Tombol Cek & Ulangi ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (_spokenText.isNotEmpty &&
+                                !_isListening &&
+                                !_isCorrect)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: ElevatedButton(
+                                  onPressed: _checkAnswer,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF74E0E0),
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 14,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                   ),
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.volume_up,
-                                    color: Colors.white,
-                                  ),
-                                  label: const Text(
-                                    "Klik untuk Mendengar",
+                                  child: const Text(
+                                    "Cek Jawaban",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              children: List.generate(
-                                targetLength,
-                                (index) => _buildLetterBox(index),
                               ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 40),
-
-                          // --- Tombol Mic ---
-                          GestureDetector(
-                            onTap: _isListening
-                                ? _stopListening
-                                : _startListening,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              height: 100,
-                              width: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _isListening
-                                    ? Colors.lightGreen
-                                    : Colors.pinkAccent,
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 5),
-                                  ),
-                                ],
+                            ElevatedButton(
+                              onPressed: _resetGame,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
-                              child: Center(
-                                child: Icon(
-                                  _isListening ? Icons.hearing : Icons.mic,
+                              child: const Text(
+                                "Ulangi",
+                                style: TextStyle(
                                   color: Colors.white,
-                                  size: 40,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
-                          ),
+                          ],
+                        ),
 
-                          const SizedBox(height: 20),
-
-                          Text(
-                            _isListening
-                                ? "Mendengarkan..."
-                                : _spokenText.isEmpty
-                                ? "Tekan Mic untuk Membaca"
-                                : "Kamu berkata: $_spokenText",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                            ),
-                          ),
-
-                          const SizedBox(height: 30),
-
-                          // --- Tombol Cek & Ulangi ---
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (_spokenText.isNotEmpty &&
-                                  !_isListening &&
-                                  !_isCorrect)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: ElevatedButton(
-                                    onPressed: _checkAnswer,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      "Cek Jawaban",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ElevatedButton(
-                                onPressed: _resetGame,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Ulangi",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                        const SizedBox(height: 30),
+                      ],
                     ),
                   ),
                 ),
@@ -509,6 +639,33 @@ class _PengejaanViewState extends State<PengejaanView> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTargetWord() {
+    final words = _targetWord.split(" ");
+
+    return Text.rich(
+      TextSpan(
+        children: words.map((w) {
+          final isActive =
+              (currentWord != null && normalize(w) == normalize(currentWord!));
+
+          return TextSpan(
+            text: "${w.toUpperCase()} ",
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 4,
+              color: Color(0xff1e1e1e),
+              backgroundColor: isActive
+                  ? Colors.blue[300]?.withValues(alpha: 0.3)
+                  : Colors.transparent,
+            ),
+          );
+        }).toList(),
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }

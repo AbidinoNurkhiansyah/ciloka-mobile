@@ -1,6 +1,7 @@
 import 'package:ciloka_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../../widgets/game_feedback_overlay.dart';
 
@@ -33,11 +34,106 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     return slotLetters.any((e) => e != null);
   }
 
+  final FlutterTts flutterTts = FlutterTts();
+
+  String? currentWord; // kata yang sedang dibacakan
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     correctAnswer = _getAnswer();
     _setupLetters();
+
+    flutterTts.awaitSpeakCompletion(true); // penting supaya progress keluar
+
+    flutterTts.setProgressHandler((
+      String text,
+      int start,
+      int end,
+      String word,
+    ) {
+      if (word.trim().isEmpty) return; // cegah highlight aneh
+      setState(() => currentWord = word);
+
+      // Auto-scroll ke kata yang sedang dibacakan
+      _scrollToWord(word);
+    });
+
+    // completion handler untuk reset highlight
+    flutterTts.setCompletionHandler(() {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() {
+            currentWord = null;
+          });
+        }
+      });
+
+      debugPrint("TTS selesai → highlight direset");
+    });
+  }
+
+  void _scrollToWord(String word) {
+    // Cari index kata
+    final words = _getQuestion().split(" ");
+    final index = words.indexOf(word);
+    if (index == -1) return;
+
+    // Hitung posisi scroll (kasar, bisa disesuaikan)
+    final position = index * 40.0; // 40 px per kata
+    _scrollController.animateTo(
+      position,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Future<void> _checkAndSpeak() async {
+    // Ambil daftar bahasa yang tersedia di device
+    List<dynamic> languages = await flutterTts.getLanguages;
+
+    // Debug: print semua bahasa
+    debugPrint("Bahasa tersedia: $languages");
+
+    // Cek apakah bahasa Indonesia ada
+    bool isAvailable = await flutterTts.isLanguageAvailable("id-ID");
+
+    if (isAvailable) {
+      await flutterTts.setLanguage("id-ID");
+      await flutterTts.setSpeechRate(0.2);
+      await flutterTts.awaitSpeakCompletion(true);
+      // Ambil soal, lalu pre-process
+      String textToSpeak = preprocessText(_getQuestion());
+      await flutterTts.speak(textToSpeak); // pakai soal biar sinkron
+    } else {
+      // Kalau tidak tersedia, kasih fallback
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.speak(
+        "Bahasa Indonesia tidak tersedia di perangkat ini.",
+      );
+    }
+  }
+
+  String preprocessText(String text) {
+    // Ganti ellipsis "..." dengan kata "titik titik titik"
+    String result = text
+        .replaceAll("...", "titik titik titik")
+        .replaceAll(".", "")
+        .replaceAll(",", "");
+
+    // Bisa juga ganti tanda baca lain kalau mau
+    result = result.replaceAll("?", "tanda tanya");
+    result = result.replaceAll("!", "tanda seru");
+
+    return result;
+  }
+
+  String normalize(String word) {
+    return word.toLowerCase().replaceAll(
+      RegExp(r'[^\w\s]'),
+      '',
+    ); // buang tanda baca
   }
 
   // ---------------- DATA LEVEL ----------------
@@ -45,15 +141,15 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
   String _getQuestion() {
     switch (widget.levelNumber) {
       case 1:
-        return 'Setiap pagi, sebelum berangkat sekolah, Rina selalu membantu ibunya ____ bunga di halaman.';
+        return 'Setiap pagi, sebelum berangkat sekolah, Rina selalu membantu ibunya ... bunga di halaman.';
       case 2:
-        return 'Ayah sedang ____ koran di teras.';
+        return 'Ayah sedang ___ koran di teras.';
       case 3:
-        return 'Dina sedang ____ surat untuk temannya.';
+        return 'Dina sedang ___ surat untuk temannya.';
       case 4:
-        return 'Setiap sore, Andi ____ di lapangan bersama teman-temannya.';
+        return 'Setiap sore, Andi ___ di lapangan bersama teman-temannya.';
       case 5:
-        return 'Untuk menjaga kesehatan, mereka rutin ____ di taman setiap pagi.';
+        return 'Untuk menjaga kesehatan, mereka rutin ___ di taman setiap pagi.';
       default:
         return 'Soal tidak ditemukan';
     }
@@ -259,7 +355,14 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
               _buildLevelDots(),
             ],
           ),
-          _circleButton(icon: Icons.volume_up_rounded, onTap: () {}),
+          _circleButton(
+            icon: Icons.volume_up_rounded,
+            onTap: () async {
+              await _checkAndSpeak();
+
+              debugPrint('speech aktif');
+            },
+          ),
         ],
       ),
     );
@@ -436,7 +539,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
 
   // -------------- SOAL -------------------
   Widget _buildQuestionCard() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final words = _getQuestion().split(" ");
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -450,14 +553,27 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
           ),
         ],
       ),
-      child: Text(
-        _getQuestion(),
-        style: TextStyle(
-          fontSize: 15,
-          height: 1.5,
-          color: colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w500,
+      child: Text.rich(
+        TextSpan(
+          children: words.map((w) {
+            final isActive =
+                (currentWord != null &&
+                normalize(w).contains(normalize(currentWord!)));
+
+            return TextSpan(
+              text: "$w ",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                color: const Color(0xff5c5c5c),
+                backgroundColor: isActive
+                    ? Colors.blue[300]?.withValues(alpha: 0.3)
+                    : Colors.transparent,
+              ),
+            );
+          }).toList(),
         ),
+        textAlign: TextAlign.center,
       ),
     );
   }
