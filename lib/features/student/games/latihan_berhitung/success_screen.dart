@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // Warna-warna yang diestimasi dari gambar desain Anda
 const Color successLightBlueBg = Color(0xFFC7EDFF);
@@ -22,7 +21,8 @@ class SuccessScreen extends StatelessWidget {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage(
-                    'assets/img/success_background.png'), // <-- GANTI PATH INI
+                  'assets/img/success_background.png',
+                ), // <-- GANTI PATH INI
                 // Sesuai komen lu "mengecilkan", 'contain' adalah cara terbaik
                 fit: BoxFit.contain,
                 alignment: Alignment.topCenter,
@@ -60,7 +60,7 @@ class SuccessScreen extends StatelessWidget {
                       // Judul (Hardcode dari gambar, bisa diganti)
                       Text(
                         'BERHASIL!', // <-- Udah gw ganti
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -102,8 +102,10 @@ class SuccessScreen extends StatelessWidget {
                   'assets/img/bird_trophy.png', // <-- GANTI PATH INI
                   height: 200,
                   width: 200,
-                  errorBuilder: (c, e, s) =>
-                      Container(height: 200, child: Icon(Icons.star, size: 150)),
+                  errorBuilder: (c, e, s) => Container(
+                    height: 200,
+                    child: Icon(Icons.star, size: 150),
+                  ),
                 ),
                 const SizedBox(height: 30),
 
@@ -128,7 +130,7 @@ class SuccessScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Berhasil',
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
                           color: successTextDarkBlue,
@@ -136,7 +138,7 @@ class SuccessScreen extends StatelessWidget {
                       ),
                       Text(
                         'Kamu Hebat!',
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
                           color: successTextDarkBlue,
@@ -166,7 +168,7 @@ class SuccessScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'Selanjutnya',
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

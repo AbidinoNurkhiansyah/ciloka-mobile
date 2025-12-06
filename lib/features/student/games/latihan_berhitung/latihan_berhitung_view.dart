@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -66,7 +65,7 @@ TextStyle getStrokeTextStyle(
     ),
   ];
 
-  return GoogleFonts.nunito(
+  return TextStyle(
     fontSize: fontSize,
     fontWeight: FontWeight.w900,
     color: textColor,
@@ -150,8 +149,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         // level maksimal 5
-        int newLevel =
-            widget.levelNumber < 5 ? widget.levelNumber + 1 : 5;
+        int newLevel = widget.levelNumber < 5 ? widget.levelNumber + 1 : 5;
 
         // 1) UPDATE DI student_index
         final querySnapshot = await FirebaseFirestore.instance
@@ -166,10 +164,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
         }
 
         // 2) UPDATE DI users (dipakai HomeStudentView)
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .update({
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
           'currentLevel': newLevel,
           // optional: reset progress
           'levelProgress': 0.0,
@@ -194,9 +189,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
   // --- OVERLAY BENAR / SALAH ---
   Widget _buildFeedbackOverlay() {
     if (status == 2) {
-      return CorrectOverlay(
-        onContinue: _navigateToSuccessScreen,
-      );
+      return CorrectOverlay(onContinue: _navigateToSuccessScreen);
     } else if (status == 3) {
       return IncorrectOverlay(
         correctAnwerText: "$correctNumber",
@@ -232,10 +225,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 gradient: LinearGradient(
-                  colors: [
-                    bg.withOpacity(0.95),
-                    bg.withOpacity(0.8),
-                  ],
+                  colors: [bg.withOpacity(0.95), bg.withOpacity(0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -251,7 +241,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
               alignment: Alignment.center,
               child: Text(
                 number.toString(),
-                style: GoogleFonts.nunito(
+                style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
                   color: Colors.white,
@@ -280,10 +270,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF6BCBFF),
-                  Color(0xFFB8E5FF),
-                ],
+                colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -315,8 +302,10 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
               children: [
                 // HEADER
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -328,7 +317,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                         children: [
                           Text(
                             'LATIHAN BERHITUNG',
-                            style: GoogleFonts.nunito(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
@@ -370,13 +359,17 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 8),
+                      horizontal: 18,
+                      vertical: 8,
+                    ),
                     child: Column(
                       children: [
                         // Kartu info level / instruksi
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.96),
                             borderRadius: BorderRadius.circular(24),
@@ -410,7 +403,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                                   children: [
                                     Text(
                                       'Level ${widget.levelNumber} dari 5',
-                                      style: GoogleFonts.nunito(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
                                         color: const Color(0xFF333333),
@@ -419,7 +412,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                                     const SizedBox(height: 4),
                                     Text(
                                       'Pilih angka yang nilainya paling besar di antara pilihan di bawah.',
-                                      style: GoogleFonts.nunito(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         color: const Color(0xFF666666),
@@ -452,11 +445,11 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                               physics: const BouncingScrollPhysics(),
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 1.5,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                              ),
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 1.5,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                  ),
                               itemCount: numbers.length,
                               itemBuilder: (context, index) {
                                 return _buildNumberButton(
@@ -498,7 +491,9 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                           right: 50,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(20),
@@ -515,7 +510,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                                   ? 'Klik salah satu angka dulu ya!'
                                   : 'Sudah yakin? Tekan tombol hijau di bawah.',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.nunito(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF444444),
@@ -530,29 +525,30 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
 
                 // TOMBOL CEK JAWABAN
                 Padding(
-                  padding:
-                      const EdgeInsets.only(left: 24, right: 24, bottom: 10),
+                  padding: const EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    bottom: 10,
+                  ),
                   child: GestureDetector(
                     onTap: isCheckButtonEnabled ? _checkAnswer : null,
                     child: Opacity(
                       opacity: isCheckButtonEnabled ? 1.0 : 0.5,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 13, horizontal: 24),
+                          vertical: 13,
+                          horizontal: 24,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF4CD964),
-                              Color(0xFF34C759),
-                            ],
+                            colors: [Color(0xFF4CD964), Color(0xFF34C759)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  Colors.green.shade800.withOpacity(0.45),
+                              color: Colors.green.shade800.withOpacity(0.45),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -561,12 +557,14 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.check_rounded,
-                                color: Colors.white),
+                            const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Cek Jawaban',
-                              style: GoogleFonts.nunito(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -616,14 +614,10 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
               color: Colors.black.withOpacity(0.18),
               blurRadius: 6,
               offset: const Offset(0, 3),
-            )
+            ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFF1E98F5),
-          size: 20,
-        ),
+        child: Icon(icon, color: const Color(0xFF1E98F5), size: 20),
       ),
     );
   }
@@ -653,8 +647,9 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: color,
-              border:
-                  isActive ? Border.all(color: Colors.white, width: 2) : null,
+              border: isActive
+                  ? Border.all(color: Colors.white, width: 2)
+                  : null,
             ),
           ),
         );
@@ -674,7 +669,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
             color: color.withOpacity(0.5),
             blurRadius: 16,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
     );

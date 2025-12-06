@@ -237,13 +237,13 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _circleButton(
             icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
-          SizedBox(width: 16),
+
           Column(
             children: [
               const Text(
@@ -259,6 +259,7 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
               _buildLevelDots(),
             ],
           ),
+          _circleButton(icon: Icons.volume_up_rounded, onTap: () {}),
         ],
       ),
     );

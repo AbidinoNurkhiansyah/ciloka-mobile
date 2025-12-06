@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // Warna yang digunakan (bisa diimpor dari file game utama jika Anda mau)
 const Color correctGreen = Colors.green;
@@ -41,7 +40,7 @@ class CorrectOverlay extends StatelessWidget {
               const SizedBox(height: 15),
               Text(
                 'BENAR!',
-                style: GoogleFonts.nunito(
+                style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w900,
                   color: Colors.white, // Teks putih
@@ -63,7 +62,7 @@ class CorrectOverlay extends StatelessWidget {
                 ),
                 child: Text(
                   'Lanjut',
-                  style: GoogleFonts.nunito(
+                  style: TextStyle(
                     fontSize: 24, // Ukuran font disesuaikan
                     fontWeight: FontWeight.w900,
                     color: correctGreen, // Warna teks tombol
@@ -116,7 +115,7 @@ class IncorrectOverlay extends StatelessWidget {
               const SizedBox(height: 15),
               Text(
                 'JAWABAN SALAH', // Teks "JAWABAN SALAH"
-                style: GoogleFonts.nunito(
+                style: TextStyle(
                   fontSize: 28, // Ukuran font disesuaikan
                   fontWeight: FontWeight.w900,
                   color: Colors.white, // Teks putih
@@ -126,7 +125,7 @@ class IncorrectOverlay extends StatelessWidget {
               // const SizedBox(height: 10),
               // Text(
               //   'Jawaban benar: $correctAnwerText',
-              //   style: GoogleFonts.nunito(
+              //   style: TextStyle(
               //     fontSize: 18,
               //     fontWeight: FontWeight.w600,
               //     color: Colors.black54,
@@ -148,7 +147,7 @@ class IncorrectOverlay extends StatelessWidget {
                 ),
                 child: Text(
                   'COBA LAGI',
-                  style: GoogleFonts.nunito(
+                  style: TextStyle(
                     fontSize: 24, // Ukuran font disesuaikan
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
