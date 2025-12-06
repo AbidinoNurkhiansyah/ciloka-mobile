@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'class_teacher_service.dart';
@@ -121,7 +122,9 @@ class FirebaseAuthService {
 
       _currentUser = userCredential.user;
 
-      print("Google Sign-In Success with UID: ${userCredential.user?.uid}");
+      debugPrint(
+        "Google Sign-In Success with UID: ${userCredential.user?.uid}",
+      );
       if (userCredential.user != null) {
         await ClassTeacherService().setUser(
           userCredential.user!.uid,

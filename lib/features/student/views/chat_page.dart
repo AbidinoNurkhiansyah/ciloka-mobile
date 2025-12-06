@@ -68,13 +68,13 @@ class _ChatPageState extends State<ChatPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 10,
                           offset: const Offset(0, 6),
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                         ),
                       ],
                     ),
@@ -210,7 +210,7 @@ class _ChatPageState extends State<ChatPage> {
                 BoxShadow(
                   blurRadius: 8,
                   offset: const Offset(0, 4),
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                 ),
               ],
             ),
@@ -342,7 +342,7 @@ class _ChatPageState extends State<ChatPage> {
               BoxShadow(
                 blurRadius: 4,
                 offset: const Offset(0, 2),
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
               ),
             ],
           ),
@@ -358,7 +358,7 @@ class _ChatPageState extends State<ChatPage> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
-                  color: textColor.withOpacity(0.85),
+                  color: textColor.withValues(alpha: 0.85),
                 ),
               ),
               const SizedBox(height: 4),
@@ -392,14 +392,14 @@ class _ChatPageState extends State<ChatPage> {
                     Icon(
                       Icons.access_time_rounded,
                       size: 11,
-                      color: textColor.withOpacity(0.6),
+                      color: textColor.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 3),
                     Text(
                       "${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}",
                       style: TextStyle(
                         fontSize: 10,
-                        color: textColor.withOpacity(0.7),
+                        color: textColor.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -417,7 +417,7 @@ class _ChatPageState extends State<ChatPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -426,7 +426,7 @@ class _ChatPageState extends State<ChatPage> {
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, -2),
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
           ),
         ],
       ),

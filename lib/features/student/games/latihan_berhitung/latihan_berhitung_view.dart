@@ -225,14 +225,17 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 gradient: LinearGradient(
-                  colors: [bg.withOpacity(0.95), bg.withOpacity(0.8)],
+                  colors: [
+                    bg.withValues(alpha: 0.95),
+                    bg.withValues(alpha: 0.8),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   if (!isDisabled)
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
+                      color: Colors.black.withValues(alpha: 0.18),
                       blurRadius: 7,
                       offset: const Offset(0, 3),
                     ),
@@ -279,12 +282,12 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
           Positioned(
             top: -80,
             left: -40,
-            child: _bubble(140, const Color(0xFF92D8FF).withOpacity(0.7)),
+            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
           ),
           Positioned(
             top: 30,
             right: -30,
-            child: _bubble(110, const Color(0xFFFFF3B0).withOpacity(0.9)),
+            child: _bubble(110, const Color(0xFFFFF3B0).withValues(alpha: 0.9)),
           ),
           Positioned(
             bottom: 120,
@@ -371,11 +374,11 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.96),
+                            color: Colors.white.withValues(alpha: 0.96),
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.12),
+                                color: Colors.black.withValues(alpha: 0.12),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -431,11 +434,11 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.96),
+                              color: Colors.white.withValues(alpha: 0.96),
                               borderRadius: BorderRadius.circular(26),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -495,11 +498,11 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -548,7 +551,9 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.green.shade800.withOpacity(0.45),
+                              color: Colors.green.shade800.withValues(
+                                alpha: 0.45,
+                              ),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -611,7 +616,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.18),
+              color: Colors.black.withValues(alpha: 0.18),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -636,7 +641,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
         } else if (isActive) {
           color = const Color(0xFF34C759);
         } else {
-          color = Colors.white.withOpacity(0.8);
+          color = Colors.white.withValues(alpha: 0.8);
         }
 
         return Padding(
@@ -666,7 +671,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha: 0.5),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

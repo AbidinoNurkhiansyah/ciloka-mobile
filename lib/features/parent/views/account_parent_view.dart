@@ -68,7 +68,7 @@ class AccountParentView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -121,9 +121,9 @@ class AccountParentView extends StatelessWidget {
           ),
           content: Text(
             "Apakah Anda yakin ingin keluar?",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: 'Nunito',
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontFamily: 'Nunito'),
           ),
           actions: [
             TextButton(
@@ -188,4 +188,3 @@ class AccountParentView extends StatelessWidget {
     );
   }
 }
-

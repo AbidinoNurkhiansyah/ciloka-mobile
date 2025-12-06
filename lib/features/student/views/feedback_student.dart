@@ -31,8 +31,7 @@ class PilihCaraBelajarScreen extends StatefulWidget {
   const PilihCaraBelajarScreen({super.key});
 
   @override
-  State<PilihCaraBelajarScreen> createState() =>
-      _PilihCaraBelajarScreenState();
+  State<PilihCaraBelajarScreen> createState() => _PilihCaraBelajarScreenState();
 }
 
 class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
@@ -120,8 +119,8 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -158,8 +157,8 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
                       type == 'Visual'
                           ? 'Kamu lebih suka belajar dengan melihat'
                           : type == 'Auditory'
-                              ? 'Kamu lebih suka belajar dengan mendengar'
-                              : 'Kamu suka belajar dengan melihat dan mendengar',
+                          ? 'Kamu lebih suka belajar dengan mendengar'
+                          : 'Kamu suka belajar dengan melihat dan mendengar',
                     )
                   : const SizedBox.shrink(),
             ),
@@ -186,10 +185,7 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  'assets/img/burung_feedback.webp',
-                  height: 180,
-                ),
+                Image.asset('assets/img/burung_feedback.webp', height: 180),
                 const SizedBox(height: 20),
                 const Text(
                   'TERIMAKASIH ATAS\nJAWABANMU',
@@ -208,7 +204,9 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 50),
+                      vertical: 12,
+                      horizontal: 50,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF33588C),
                       border: Border.all(color: Colors.white, width: 2),
@@ -238,8 +236,12 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.only(left: 20, right: 20, top: 40, bottom: 24),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 40,
+            bottom: 24,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -302,8 +304,10 @@ class _PilihCaraBelajarScreenState extends State<PilihCaraBelajarScreen>
                     flex: 1,
                     child: Align(
                       alignment: Alignment.center,
-                      child: buildOption('Visual & Auditory',
-                          'assets/img/visual_auditory.webp'),
+                      child: buildOption(
+                        'Visual & Auditory',
+                        'assets/img/visual_auditory.webp',
+                      ),
                     ),
                   ),
                 ],

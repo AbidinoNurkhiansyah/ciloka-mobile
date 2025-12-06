@@ -46,7 +46,7 @@ class SuccessScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -76,13 +76,11 @@ class SuccessScreen extends StatelessWidget {
 
                       // Tombol Volume
                       GestureDetector(
-                        onTap: () {
-                          /* TODO: Logika Suara */
-                        },
+                        onTap: () {},
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -102,10 +100,8 @@ class SuccessScreen extends StatelessWidget {
                   'assets/img/bird_trophy.png', // <-- GANTI PATH INI
                   height: 200,
                   width: 200,
-                  errorBuilder: (c, e, s) => Container(
-                    height: 200,
-                    child: Icon(Icons.star, size: 150),
-                  ),
+                  errorBuilder: (c, e, s) =>
+                      SizedBox(height: 200, child: Icon(Icons.star, size: 150)),
                 ),
                 const SizedBox(height: 30),
 
@@ -119,7 +115,7 @@ class SuccessScreen extends StatelessWidget {
                     border: Border.all(color: successYellowBorder, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: successYellowBorder.withOpacity(0.5),
+                        color: successYellowBorder.withValues(alpha: 0.5),
                         spreadRadius: 2,
                         blurRadius: 10,
                         offset: const Offset(0, 4),

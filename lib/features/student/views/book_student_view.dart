@@ -36,7 +36,7 @@ class BookStudentView extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF16C4FF).withOpacity(0.35),
+                        color: const Color(0xFF16C4FF).withValues(alpha: 0.35),
                         blurRadius: 16,
                         offset: const Offset(0, 10),
                       ),
@@ -65,7 +65,7 @@ class BookStudentView extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.35),
+                              color: Colors.white.withValues(alpha: 0.35),
                               shape: BoxShape.circle,
                             ),
                             child: CircleAvatar(
@@ -104,7 +104,9 @@ class BookStudentView extends StatelessWidget {
                                   'Selamat Datang di kelas',
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
-                                        color: Colors.white.withOpacity(0.92),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.92,
+                                        ),
                                         fontWeight: FontWeight.w600,
                                       ),
                                 ),
@@ -206,7 +208,7 @@ class _ChatCallout extends StatelessWidget {
                   Text(
                     'Story Room siap untuk kamu dan gurumu',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -331,7 +333,7 @@ class _InfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.85),
+              color: colorScheme.onSurface.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Icon(
@@ -352,7 +354,7 @@ class _InfoCard extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center, // Biar rapi kalau panjang
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.85),
+              color: colorScheme.onSurface.withValues(alpha: 0.85),
               fontWeight: FontWeight.w800,
             ),
           ),

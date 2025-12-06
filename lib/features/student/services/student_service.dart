@@ -1,5 +1,6 @@
 import 'package:ciloka_app/features/student/models/user_student_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class StudentService {
   final _firestore = FirebaseFirestore.instance;
@@ -8,7 +9,9 @@ class StudentService {
   // Fungsi ini akan "mendengarkan" perubahan di student_index.
   // Jadi kalau level berubah, tampilan Home otomatis update.
   Stream<StudentModel?> streamStudentProfile(String uid) {
-    print("DEBUG STREAM: Mencari data untuk UID: $uid di student_index...");
+    debugPrint(
+      "DEBUG STREAM: Mencari data untuk UID: $uid di student_index...",
+    );
 
     return _firestore
         .collection('student_index') // Target koleksi: student_index
@@ -20,7 +23,7 @@ class StudentService {
         .snapshots()
         .map((snapshot) {
           if (snapshot.docs.isEmpty) {
-            print(
+            debugPrint(
               "DEBUG STREAM: ❌ Data tidak ditemukan di student_index untuk UID: $uid",
             );
             return null;
@@ -30,7 +33,7 @@ class StudentService {
           final doc = snapshot.docs.first;
           final data = doc.data();
 
-          print(
+          debugPrint(
             "DEBUG STREAM: ✅ Data ditemukan! Level saat ini: ${data['currentLevel']}",
           );
 
@@ -52,14 +55,14 @@ class StudentService {
       // Kalau ketemu, update dokumen tersebut
       await query.docs.first.reference.update(data);
     } else {
-      print("Error updateProfile: Dokumen tidak ditemukan untuk UID $uid");
+      debugPrint("Error updateProfile: Dokumen tidak ditemukan untuk UID $uid");
     }
   }
 
   // --- 3. FUNGSI UPDATE LEVEL (Dipanggil dari Game) ---
   // Ini buat ngebuka level selanjutnya di student_index
   Future<void> unlockNextLevel(String uid, int newLevel) async {
-    print(
+    debugPrint(
       "DEBUG UNLOCK: Mencoba update level ke $newLevel di student_index...",
     );
 
@@ -76,9 +79,11 @@ class StudentService {
         'currentLevel': newLevel,
         'levelProgress': 0.0, // Reset progress bar kalau naik level
       });
-      print("DEBUG UNLOCK: ✅ Berhasil update level di student_index!");
+      debugPrint("DEBUG UNLOCK: ✅ Berhasil update level di student_index!");
     } else {
-      print("DEBUG UNLOCK: ❌ Gagal! Dokumen tidak ditemukan di student_index.");
+      debugPrint(
+        "DEBUG UNLOCK: ❌ Gagal! Dokumen tidak ditemukan di student_index.",
+      );
     }
   }
 

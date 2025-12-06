@@ -16,7 +16,7 @@ class ErrorView extends StatelessWidget {
               Icon(
                 Icons.search_off_rounded, // Ikon 'nyasar'
                 size: 120,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 24),
               Text(
@@ -27,7 +27,7 @@ class ErrorView extends StatelessWidget {
                   color: Colors.white,
                   shadows: [
                     Shadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: Offset(2, 2),
                     ),
@@ -44,7 +44,7 @@ class ErrorView extends StatelessWidget {
                   color: Colors.white,
                   shadows: [
                     Shadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 5,
                       offset: Offset(1, 1),
                     ),
@@ -55,10 +55,7 @@ class ErrorView extends StatelessWidget {
               Text(
                 'Maaf, halaman yang kamu tuju sepertinya tidak ada atau sedang diperbaiki.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 48),
               ElevatedButton.icon(
@@ -70,8 +67,10 @@ class ErrorView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF2ACCF0),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

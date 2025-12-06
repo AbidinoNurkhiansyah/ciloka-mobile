@@ -6,10 +6,7 @@ class PlayLevelView extends StatelessWidget {
   // Terima nomor level
   final int levelNumber;
 
-  const PlayLevelView({
-    super.key,
-    required this.levelNumber,
-  });
+  const PlayLevelView({super.key, required this.levelNumber});
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +25,7 @@ class PlayLevelView extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback kalo gambar nggak ada
-                return Container(
-                    height: 100, color: Colors.green.shade300);
+                return Container(height: 100, color: Colors.green.shade300);
               },
             ),
           ),
@@ -62,12 +58,12 @@ class PlayLevelView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 8,
-                shadowColor: Colors.black.withOpacity(0.4),
+                shadowColor: Colors.black.withValues(alpha: 0.4),
               ),
               onPressed: () {
                 // --- 2. INI YANG DIUBAH ---
-                print('Mulai Level $levelNumber!');
-                
+                debugPrint('Mulai Level $levelNumber!');
+
                 // Langsung navigasi ke GAME PERTAMA
                 // Pake 'pushReplacement' biar user nggak bisa 'Back' ke sini
                 Navigator.pushReplacementNamed(
@@ -102,8 +98,11 @@ class PlayLevelView extends StatelessWidget {
                       'assets/img/level/burung_level.png', // <-- Path lu yang bener
                       height: 100,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.flutter_dash,
-                            size: 100, color: Colors.blue);
+                        return Icon(
+                          Icons.flutter_dash,
+                          size: 100,
+                          color: Colors.blue,
+                        );
                       },
                     ),
                   ),
@@ -112,7 +111,9 @@ class PlayLevelView extends StatelessWidget {
                     top: 50,
                     left: 90,
                     child: _buildSpeechBubble(
-                        context, 'Ayo Mulai Level $levelNumber!'),
+                      context,
+                      'Ayo Mulai Level $levelNumber!',
+                    ),
                   ),
                 ],
               ),
@@ -128,11 +129,11 @@ class PlayLevelView extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 5,
                         offset: Offset(0, 2),
                       ),
@@ -161,10 +162,10 @@ class PlayLevelView extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 8,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Text(

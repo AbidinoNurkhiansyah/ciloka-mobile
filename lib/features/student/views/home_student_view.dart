@@ -125,7 +125,7 @@ class _HomeStudentViewState extends State<HomeStudentView> {
         children: [
           CircleAvatar(
             radius: 36,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             backgroundImage: student.photoUrl.isNotEmpty
                 ? CachedNetworkImageProvider(student.photoUrl)
                 : null,
@@ -293,11 +293,11 @@ class _HomeStudentViewState extends State<HomeStudentView> {
                 height: 120,
                 decoration: BoxDecoration(
                   color: (isUnlocked ? colors[level.levelNumber] : Colors.grey)
-                      ?.withOpacity(0.9),
+                      ?.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      Colors.white.withOpacity(0.5),
+                      Colors.white.withValues(alpha: 0.5),
                       isUnlocked ? colors[level.levelNumber]! : Colors.grey,
                     ],
                     center: const Alignment(-0.6, -0.6),
@@ -316,7 +316,7 @@ class _HomeStudentViewState extends State<HomeStudentView> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.lock, color: Colors.white, size: 30),

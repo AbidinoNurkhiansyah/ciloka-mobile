@@ -90,7 +90,7 @@ class ConfirmParentView extends StatelessWidget {
                     Positioned(
                       right: -50,
                       top: 0,
-                      child: Container(
+                      child: SizedBox(
                         width: 160,
                         height: 180,
                         child: Image.asset(
@@ -148,8 +148,9 @@ class ConfirmParentView extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Navigate to main parent view or process login
-                      GlobalNavigator.pushReplacementNamed(AppRoutes.mainParent);
+                      GlobalNavigator.pushReplacementNamed(
+                        AppRoutes.mainParent,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xff78CAEF), // Bright blue
@@ -214,12 +215,7 @@ class ConfirmParentView extends StatelessWidget {
         shape: BoxShape.circle,
         color: Color(0xffE8F4FD),
       ),
-      child: Icon(
-        Icons.person,
-        size: 100,
-        color: Color(0xff78CAEF),
-      ),
+      child: Icon(Icons.person, size: 100, color: Color(0xff78CAEF)),
     );
   }
 }
-

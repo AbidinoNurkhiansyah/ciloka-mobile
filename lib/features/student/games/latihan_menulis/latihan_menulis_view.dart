@@ -143,13 +143,13 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
       case 1:
         return 'Setiap pagi, sebelum berangkat sekolah, Rina selalu membantu ibunya ... bunga di halaman.';
       case 2:
-        return 'Ayah sedang ___ koran di teras.';
+        return 'Ayah sedang ... koran di teras.';
       case 3:
-        return 'Dina sedang ___ surat untuk temannya.';
+        return 'Dina sedang ... surat untuk temannya.';
       case 4:
-        return 'Setiap sore, Andi ___ di lapangan bersama teman-temannya.';
+        return 'Setiap sore, Andi ... di lapangan bersama teman-temannya.';
       case 5:
-        return 'Untuk menjaga kesehatan, mereka rutin ___ di taman setiap pagi.';
+        return 'Untuk menjaga kesehatan, mereka rutin ... di taman setiap pagi.';
       default:
         return 'Soal tidak ditemukan';
     }

@@ -46,7 +46,9 @@ class _MainStudentViewState extends State<MainStudentView> {
                 currentIndex: vm.currentIndex,
                 onTap: vm.setIndexBottomNavbar,
                 selectedItemColor: colorScheme.onSurface,
-                unselectedItemColor: colorScheme.onSurface.withOpacity(0.6),
+                unselectedItemColor: colorScheme.onSurface.withValues(
+                  alpha: 0.6,
+                ),
                 selectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,

@@ -254,7 +254,7 @@ class ClassStudentListView extends StatelessWidget {
                           return DataRow(
                             color: WidgetStateProperty.all(
                               isEven
-                                  ? Colors.white.withOpacity(0.9)
+                                  ? Colors.white.withValues(alpha: 0.9)
                                   : Colors.grey.shade200,
                             ),
                             cells: [
