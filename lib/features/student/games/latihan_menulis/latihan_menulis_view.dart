@@ -617,8 +617,9 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
             width: tileSize,
             height: tileSize,
             child: DragTarget<_LetterTile>(
-              onWillAccept: (data) => true,
-              onAccept: (tile) {
+              onWillAcceptWithDetails: (data) => true,
+              onAcceptWithDetails: (detail) {
+                final tile = detail.data;
                 setState(() {
                   if (slotLetters[index] != null) {
                     availableLetters.add(slotLetters[index]!);
