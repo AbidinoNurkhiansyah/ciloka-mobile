@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:ciloka_app/core/theme/app_spacing.dart';
 import 'package:ciloka_app/features/student/models/user_student_model.dart';
 import 'package:ciloka_app/features/student/services/student_service.dart';
 import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.dart';
@@ -24,8 +23,9 @@ class ProfileStudentView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         automaticallyImplyLeading: false,
+        elevation: 0,
         title: const Text(
           'Profil',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -35,7 +35,7 @@ class ProfileStudentView extends StatelessWidget {
             onPressed: () {
               _showLogoutDialog(context);
             },
-            icon: Icon(Icons.login),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
           ),
         ],
       ),
@@ -49,99 +49,224 @@ class ProfileStudentView extends StatelessWidget {
           final student = snapshot.data!;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               children: [
-                AppSpacing.vLg,
-                // Owl character / Profile picture
+                // Header Section with gradient
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: student.photoUrl.isNotEmpty
-                      ? ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl: student.photoUrl,
-                            errorWidget: (context, url, error) =>
-                                CircularProgressIndicator(),
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.pets,
-                          size: 60,
-                          color: Color(0xFF0090D4),
-                        ),
-                ),
-                AppSpacing.vMd,
-                Text(
-                  student.studentName,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                AppSpacing.vLg,
-                // Stats card
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
+                    ),
                   ),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          _buildStatItem(
-                            context,
-                            'Level',
-                            '${student.currentLevel}/5',
-                            Icons.flag,
-                          ),
-                          _buildStatItem(
-                            context,
-                            'Progress',
-                            '${(student.levelProgress * 100).toInt()}%',
-                            Icons.trending_up,
+                          Container(
+                            width: 130,
+                            height: 130,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: student.photoUrl.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: student.photoUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) =>
+                                          const CircularProgressIndicator(),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                            color: Colors.white,
+                                            child: const Icon(
+                                              Icons.pets,
+                                              size: 60,
+                                              color: Color(0xFF0090D4),
+                                            ),
+                                          ),
+                                    )
+                                  : Container(
+                                      color: Colors.white,
+                                      child: const Icon(
+                                        Icons.pets,
+                                        size: 60,
+                                        color: Color(0xFF0090D4),
+                                      ),
+                                    ),
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      // Name
+                      Text(
+                        student.studentName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Level Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Level ${student.currentLevel}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
-                AppSpacing.vLg,
-                // Settings button
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Handle settings
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Pengaturan'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                      vertical: AppSpacing.md,
-                    ),
+
+                // Stats Section
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Statistik Belajar',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Stats Cards Grid
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildModernStatCard(
+                              context,
+                              icon: Icons.emoji_events_rounded,
+                              label: 'Level',
+                              value: '${student.currentLevel}',
+                              subtitle: 'dari 5',
+                              color: const Color(0xFFFFB800),
+                              gradientColors: [
+                                const Color(0xFFFFB800),
+                                const Color(0xFFFF8C00),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildModernStatCard(
+                              context,
+                              icon: Icons.trending_up_rounded,
+                              label: 'Progress',
+                              value:
+                                  '${(student.levelProgress * 100).toInt()}%',
+                              subtitle: 'selesai',
+                              color: const Color(0xFF4CAF50),
+                              gradientColors: [
+                                const Color(0xFF4CAF50),
+                                const Color(0xFF2E7D32),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Progress Bar Card
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Progress Level',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  '${(student.levelProgress * 100).toInt()}%',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value: student.levelProgress,
+                                minHeight: 10,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -152,30 +277,70 @@ class ProfileStudentView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, size: 40, color: Theme.of(context).colorScheme.secondary),
-        AppSpacing.vSm,
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+  Widget _buildModernStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required String subtitle,
+    required Color color,
+    required List<Color> gradientColors,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -184,22 +349,31 @@ class ProfileStudentView extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          title: Text("Konfirmasi Keluar"),
-          content: Text("Apakah Anda yakin ingin keluar?"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout_rounded, color: Colors.red),
+              SizedBox(width: 10),
+              Text("Konfirmasi Keluar"),
+            ],
+          ),
+          content: const Text("Apakah Anda yakin ingin keluar?"),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Tutup dialog
+                Navigator.pop(context);
               },
               child: Text(
                 "Tidak",
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
                 final prefs = await SharedPreferences.getInstance();
@@ -210,13 +384,19 @@ class ProfileStudentView extends StatelessWidget {
                   listen: false,
                 ).logout(context);
 
-                // Reset navigation index ke beranda
                 Provider.of<NavigationStudentViewModel>(
                   context,
                   listen: false,
                 ).setIndexBottomNavbar(0);
               },
-              child: Text('Ya'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Ya, Keluar'),
             ),
           ],
         );
