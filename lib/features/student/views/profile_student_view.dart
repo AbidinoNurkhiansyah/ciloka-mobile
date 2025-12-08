@@ -356,10 +356,16 @@ class ProfileStudentView extends StatelessWidget {
             children: [
               Icon(Icons.logout_rounded, color: Colors.red),
               SizedBox(width: 10),
-              Text("Konfirmasi Keluar"),
+              Text(
+                "Konfirmasi Keluar",
+                style: TextStyle(color: Color(0xff1e1e1e)),
+              ),
             ],
           ),
-          content: const Text("Apakah Anda yakin ingin keluar?"),
+          content: const Text(
+            "Apakah Anda yakin ingin keluar?",
+            style: TextStyle(color: Color(0xff797979)),
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -373,7 +379,7 @@ class ProfileStudentView extends StatelessWidget {
                 ),
               ),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 final prefs = await SharedPreferences.getInstance();
@@ -389,9 +395,8 @@ class ProfileStudentView extends StatelessWidget {
                   listen: false,
                 ).setIndexBottomNavbar(0);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
