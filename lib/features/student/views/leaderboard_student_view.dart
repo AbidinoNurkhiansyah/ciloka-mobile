@@ -1,4 +1,4 @@
-import 'package:ciloka_app/core/theme/app_spacing.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,6 @@ class LeaderboardStudentView extends StatelessWidget {
 
     final String currentUid = currentUser.uid;
 
-    // Stream: cari student_index milik siswa yang login → dapet classId & teacherId
     final studentIndexStream = FirebaseFirestore.instance
         .collection('student_index')
         .where('studentId', isEqualTo: currentUid)
@@ -23,161 +22,57 @@ class LeaderboardStudentView extends StatelessWidget {
         .snapshots();
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF29B6F6),
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Peringkat Kelas',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
+      extendBodyBehindAppBar: true,
       body: Container(
-        color: const Color(0xFFB0DAFD),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 145, 205, 255), // Light Blue
+              Color(0xFFB0DAFD), // Deep Blue
+            ],
+          ),
+        ),
         child: SafeArea(
           child: StreamBuilder<QuerySnapshot>(
             stream: studentIndexStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const Center(
-                  child: Text(
-                    'Terjadi kesalahan mengambil data siswa',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                return _buildErrorState(
+                  'Terjadi kesalahan mengambil data siswa',
                 );
               }
 
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
               }
 
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Data siswa tidak ditemukan 😢',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                );
+                return _buildErrorState('Data siswa tidak ditemukan 😢');
               }
 
               final doc = snapshot.data!.docs.first;
               final data = doc.data() as Map<String, dynamic>;
 
-              final String classId = data['classId'] ?? '';
-              final String teacherId = data['teacherId'] ?? '';
-              final String grade = data['grade'] ?? '-';
-              final String className = data['className'] ?? '-';
+              final String currentClassId = (data['classId'] ?? '') as String;
+              final String currentTeacherId =
+                  (data['teacherId'] ?? '') as String;
+              final String grade = (data['grade'] ?? '-') as String;
+              final String className = (data['className'] ?? '-') as String;
 
-              if (classId.isEmpty || teacherId.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Data kelas belum lengkap',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                );
+              if (currentClassId.isEmpty || currentTeacherId.isEmpty) {
+                return _buildErrorState('Data kelas belum lengkap');
               }
 
-              // Stream leaderboard: semua siswa di kelas & guru yang sama
-              // ⚠️ TANPA orderBy, jadi gak perlu composite index
-              final leaderboardStream = FirebaseFirestore.instance
-                  .collection('student_index')
-                  .where('teacherId', isEqualTo: teacherId)
-                  .where('classId', isEqualTo: classId)
-                  .snapshots();
-
-              return StreamBuilder<QuerySnapshot>(
-                stream: leaderboardStream,
-                builder: (context, lbSnapshot) {
-                  if (lbSnapshot.hasError) {
-                    return const Center(
-                      child: Text(
-                        'Terjadi kesalahan mengambil leaderboard',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }
-
-                  if (lbSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!lbSnapshot.hasData || lbSnapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Belum ada peringkat di kelas ini',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }
-
-                  // Sort di client: currentLevel terbesar → teratas
-                  final docs = lbSnapshot.data!.docs.toList()
-                    ..sort((a, b) {
-                      final da = a.data() as Map<String, dynamic>;
-                      final db = b.data() as Map<String, dynamic>;
-                      final la = (da['currentLevel'] ?? 1) as int;
-                      final lb = (db['currentLevel'] ?? 1) as int;
-                      return lb.compareTo(la);
-                    });
-
-                  return Column(
-                    children: [
-                      AppSpacing.vMd,
-                      _buildHeaderTrophy(context),
-                      AppSpacing.vSm,
-                      _buildClassInfoBanner(grade, className),
-                      AppSpacing.vSm,
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                            itemCount: docs.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 12, thickness: 0.3),
-                            itemBuilder: (context, index) {
-                              final d =
-                                  docs[index].data() as Map<String, dynamic>;
-
-                              final String name =
-                                  d['studentName'] ?? 'Tanpa Nama';
-                              final int level = d['currentLevel'] ?? 1;
-                              final String studentId = d['studentId'] ?? '';
-
-                              final int rank = index + 1;
-                              final bool isMe = studentId == currentUid;
-
-                              return _buildLeaderboardRow(
-                                context: context,
-                                rank: rank,
-                                name: name,
-                                level: level,
-                                isMe: isMe,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              return _LeaderboardContent(
+                grade: grade,
+                className: className,
+                classId: currentClassId,
+                teacherId: currentTeacherId,
+                currentUid: currentUid,
               );
             },
           ),
@@ -186,185 +81,564 @@ class LeaderboardStudentView extends StatelessWidget {
     );
   }
 
-  // 🏆 Header trophy
-  Widget _buildHeaderTrophy(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.center,
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Text(
+        message,
+        style: const TextStyle(color: Colors.white, fontSize: 16),
+      ),
+    );
+  }
+}
+
+class _LeaderboardContent extends StatelessWidget {
+  final String grade;
+  final String className;
+  final String classId;
+  final String teacherId;
+  final String currentUid;
+
+  const _LeaderboardContent({
+    required this.grade,
+    required this.className,
+    required this.classId,
+    required this.teacherId,
+    required this.currentUid,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 💡 Using Stack to overlay DraggableScrollableSheet
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('student_index')
+          .where('teacherId', isEqualTo: teacherId)
+          .where('classId', isEqualTo: classId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text("Error loading leaderboard"));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Center(child: Text("Belum ada data"));
+        }
+
+        // Sort & Convert
+        final entries = docs.map((d) {
+          final m = d.data() as Map<String, dynamic>;
+          return _StudentEntry(
+            studentId: (m['studentId'] ?? '') as String,
+            studentName: (m['studentName'] ?? 'Siswa') as String,
+            photoUrl: (m['photoUrl'] ?? '') as String,
+            level: (m['currentLevel'] ?? 1) as int,
+          );
+        }).toList()..sort((a, b) => b.level.compareTo(a.level));
+
+        final top3 = entries.take(3).toList();
+        final others = entries.skip(3).toList();
+
+        return Stack(
           children: [
-            Icon(Icons.emoji_events, size: 110, color: Colors.amber.shade400),
-            Positioned(
-              top: 38,
-              child: Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
+            // 1. Background Content (Header & Podium)
+            Column(
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 10),
+                Podium(topStudents: top3, currentUid: currentUid),
+                // Add some space at the bottom so podium isn't hidden by default sheet position
+                const SizedBox(height: 180),
+              ],
+            ),
+
+            // 2. Draggable Sheet
+            DraggableScrollableSheet(
+              initialChildSize: 0.47, // Covers about half screen initially
+              minChildSize: 0.47,
+              maxChildSize: 0.92, // Scrolled up almost to top
+              builder: (context, scrollController) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
                     ),
                   ),
-                ),
-              ),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 12),
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+
+                      // 📋 List Content
+                      Expanded(
+                        child: others.isEmpty
+                            ? Center(
+                                child: Text(
+                                  "Belum ada siswa lain",
+                                  style: TextStyle(color: Colors.grey.shade500),
+                                ),
+                              )
+                            : ListView.separated(
+                                controller:
+                                    scrollController, // 🔑 Essential for drag sync
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                itemCount: others.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final student = others[index];
+                                  final rank = index + 4;
+                                  final isMe = student.studentId == currentUid;
+                                  return _buildListRow(student, rank, isMe);
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Papan Peringkat Kelas',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  // 🎓 Banner info kelas (tampilkan grade dan className)
-  Widget _buildClassInfoBanner(String grade, String className) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Column(
         children: [
-          const Icon(Icons.class_, size: 16, color: Color(0xFF1976D2)),
-          const SizedBox(width: 6),
-          Text(
-            'Kelas $grade $className',
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF1976D2),
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Leaderboard",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                      shadows: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Text(
+                      'Kelas $grade $className',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.emoji_events,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // 🔢 1 baris leaderboard
-  Widget _buildLeaderboardRow({
-    required BuildContext context,
-    required int rank,
-    required String name,
-    required int level,
-    required bool isMe,
-  }) {
-    final Color baseColor = isMe ? const Color(0xFFE3F2FD) : Colors.white;
-    final FontWeight nameWeight = isMe ? FontWeight.w800 : FontWeight.w600;
-
+  Widget _buildListRow(_StudentEntry student, int rank, bool isMe) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: baseColor,
+        color: isMe ? Color(0xFFF0F4FF) : Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: isMe
+            ? Border.all(color: Color(0xFF4A00E0), width: 1.5)
+            : Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          _buildRankBadge(rank),
-          AppSpacing.hSm,
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              "$rank",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          CircleAvatar(
+            radius: 22,
+            backgroundImage: student.photoUrl.isNotEmpty
+                ? CachedNetworkImageProvider(student.photoUrl)
+                : null,
+            child: student.photoUrl.isEmpty
+                ? const Icon(Icons.person, color: Colors.grey)
+                : null,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontWeight: nameWeight, fontSize: 14),
-                      ),
-                    ),
-                    if (isMe) ...[
-                      const SizedBox(width: 4),
-                      const Text(
-                        '(Kamu)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blueGrey,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ],
+                Text(
+                  student.studentName,
+                  style: TextStyle(
+                    fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.videogame_asset,
-                      size: 14,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 4),
+                    Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+                    SizedBox(width: 4),
                     Text(
-                      'Level $level',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      "Level ${student.level}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+          if (isMe)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Color(0xFF4A00E0).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                "Kamu",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A00E0),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
+}
 
-  // 🥇 Badge rank (1,2,3 medali; lainnya bulat biasa)
-  Widget _buildRankBadge(int rank) {
-    Color bg;
-    IconData? icon;
+class Podium extends StatelessWidget {
+  final List<_StudentEntry> topStudents;
+  final String currentUid;
 
-    if (rank == 1) {
-      bg = Colors.amber.shade400;
-      icon = Icons.emoji_events;
-    } else if (rank == 2) {
-      bg = Colors.grey.shade400;
-      icon = Icons.emoji_events;
-    } else if (rank == 3) {
-      bg = Colors.brown.shade300;
-      icon = Icons.emoji_events;
-    } else {
-      bg = Colors.blueGrey.shade100;
-    }
+  const Podium({
+    super.key,
+    required this.topStudents,
+    required this.currentUid,
+  });
 
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Center(
-        child: icon != null
-            ? Icon(icon, size: 20, color: Colors.white)
-            : Text(
-                '$rank',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+  @override
+  Widget build(BuildContext context) {
+    if (topStudents.isEmpty) return const SizedBox();
+
+    final rank1 = topStudents.isNotEmpty ? topStudents[0] : null;
+    final rank2 = topStudents.length > 1 ? topStudents[1] : null;
+    final rank3 = topStudents.length > 2 ? topStudents[2] : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Rank 2
+          if (rank2 != null)
+            Expanded(
+              child: _PodiumItem(
+                student: rank2,
+                rank: 2,
+                currentUid: currentUid,
+                height: 140,
               ),
+            ),
+          // Rank 1
+          if (rank1 != null)
+            Expanded(
+              child: _PodiumItem(
+                student: rank1,
+                rank: 1,
+                currentUid: currentUid,
+                height: 180, // slightly taller
+                isFirst: true,
+              ),
+            ),
+          // Rank 3
+          if (rank3 != null)
+            Expanded(
+              child: _PodiumItem(
+                student: rank3,
+                rank: 3,
+                currentUid: currentUid,
+                height: 120,
+              ),
+            ),
+        ],
       ),
     );
   }
+}
+
+class _PodiumItem extends StatelessWidget {
+  final _StudentEntry student;
+  final int rank;
+  final String currentUid;
+  final double height;
+  final bool isFirst;
+
+  const _PodiumItem({
+    required this.student,
+    required this.rank,
+    required this.currentUid,
+    required this.height,
+    this.isFirst = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isMe = student.studentId == currentUid;
+    // Gold, Silver, Bronze
+    final Color borderColor = rank == 1
+        ? const Color(0xFFFFD700)
+        : (rank == 2 ? const Color(0xFFC0C0C0) : const Color(0xFFCD7F32));
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // Avatar + Crown
+        Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: borderColor,
+                  width: isFirst ? 3.5 : 2.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: isFirst ? 40 : 30, // Larger avatars
+                backgroundImage: student.photoUrl.isNotEmpty
+                    ? CachedNetworkImageProvider(student.photoUrl)
+                    : null,
+                child: student.photoUrl.isEmpty
+                    ? Icon(
+                        Icons.person,
+                        color: Colors.grey,
+                        size: isFirst ? 30 : 24,
+                      )
+                    : null,
+              ),
+            ),
+            if (isFirst)
+              Positioned(
+                top: -26,
+                child: const Icon(
+                  Icons.workspace_premium,
+                  color: Color(0xFFFFD700),
+                  size: 36,
+                ),
+              ),
+            Positioned(
+              bottom: -10,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: borderColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  "$rank",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Name
+        Text(
+          student.studentName,
+          maxLines: 1,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
+            fontSize: isFirst ? 15 : 13,
+            shadows: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          "Lvl ${student.level}",
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Podium Box
+        Container(
+          height: height - 60,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.25),
+                Colors.white.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1,
+              ),
+              left: BorderSide(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 0.5,
+              ),
+              right: BorderSide(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Optional: Can add score or points here if available
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StudentEntry {
+  final String studentId;
+  final String studentName;
+  final String photoUrl;
+  final int level;
+
+  _StudentEntry({
+    required this.studentId,
+    required this.studentName,
+    required this.photoUrl,
+    required this.level,
+  });
 }
