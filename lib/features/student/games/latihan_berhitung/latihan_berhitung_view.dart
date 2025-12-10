@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:ciloka_app/features/student/services/student_service.dart';
 
 import '../../../../widgets/game_feedback_overlay.dart';
 import 'success_screen.dart';
@@ -89,6 +91,10 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
   int? selectedNumber;
   int status = 0; // 0: Main, 1: Dipilih, 2: Benar, 3: Salah
 
+  final player = AudioPlayer();
+  int currentPoints = 10;
+  final StudentService _studentService = StudentService();
+
   @override
   void initState() {
     super.initState();
@@ -121,6 +127,7 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     numbers.shuffle();
     selectedNumber = null;
     status = 0;
+    currentPoints = 10; // Reset points for new question
     setState(() {});
   }
 
@@ -132,15 +139,29 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     });
   }
 
-  void _checkAnswer() {
+  Future<void> _checkAnswer() async {
     if (selectedNumber == null) return;
-    setState(() {
-      if (selectedNumber == correctNumber) {
-        status = 2;
-      } else {
-        status = 3;
+
+    if (selectedNumber == correctNumber) {
+      await player.play(AssetSource('audio/correct.mp3'));
+
+      // Add points to Firestore
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await _studentService.addPoints(uid, currentPoints);
       }
-    });
+
+      setState(() {
+        status = 2;
+      });
+    } else {
+      await player.play(AssetSource('audio/wrong.mp3'));
+
+      setState(() {
+        currentPoints = (currentPoints - 2).clamp(0, 10);
+        status = 3;
+      });
+    }
   }
 
   // --- UPDATE LEVEL KE FIREBASE (student_index + users, max 5) ---

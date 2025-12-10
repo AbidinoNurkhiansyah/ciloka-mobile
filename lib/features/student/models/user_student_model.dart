@@ -6,6 +6,7 @@ class StudentModel {
   final String photoUrl;
   final int currentLevel;
   final double levelProgress; // 0.0 to 1.0
+  final int totalPoints;
 
   StudentModel({
     required this.uid,
@@ -15,6 +16,7 @@ class StudentModel {
     required this.photoUrl,
     this.currentLevel = 1,
     this.levelProgress = 0.0,
+    this.totalPoints = 0,
   });
 
   factory StudentModel.fromFirestore(Map<String, dynamic> data, String uid) {
@@ -31,6 +33,7 @@ class StudentModel {
       photoUrl: data['photoUrl'] ?? '',
       currentLevel: data['currentLevel'] ?? 1,
       levelProgress: (data['levelProgress'] ?? 0.0).toDouble(),
+      totalPoints: data['totalPoints'] ?? 0,
     );
   }
 
@@ -42,6 +45,7 @@ class StudentModel {
       'photoUrl': photoUrl,
       'currentLevel': currentLevel,
       'levelProgress': levelProgress,
+      'totalPoints': totalPoints,
     };
   }
 }

@@ -138,8 +138,12 @@ class _LeaderboardContent extends StatelessWidget {
             studentName: (m['studentName'] ?? 'Siswa') as String,
             photoUrl: (m['photoUrl'] ?? '') as String,
             level: (m['currentLevel'] ?? 1) as int,
+            totalPoints: (m['totalPoints'] ?? 0) as int,
           );
-        }).toList()..sort((a, b) => b.level.compareTo(a.level));
+        }).toList();
+
+        // Sort by Points DESC
+        entries.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
 
         final top3 = entries.take(3).toList();
         final others = entries.skip(3).toList();
@@ -365,6 +369,21 @@ class _LeaderboardContent extends StatelessWidget {
                     SizedBox(width: 4),
                     Text(
                       "Level ${student.level}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      size: 14,
+                      color: Colors.orangeAccent,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${student.totalPoints} pts",
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -620,7 +639,14 @@ class _PodiumItem extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Optional: Can add score or points here if available
+              Text(
+                "${student.totalPoints} PTS",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -634,11 +660,13 @@ class _StudentEntry {
   final String studentName;
   final String photoUrl;
   final int level;
+  final int totalPoints;
 
   _StudentEntry({
     required this.studentId,
     required this.studentName,
     required this.photoUrl,
     required this.level,
+    this.totalPoints = 0,
   });
 }

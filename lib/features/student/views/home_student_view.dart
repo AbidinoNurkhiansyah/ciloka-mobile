@@ -348,7 +348,11 @@ class _HomeStudentViewState extends State<HomeStudentView>
               right: 16,
               child: _levelIsland(context, levels[1], 3, student.currentLevel),
             ),
-            Positioned(top: 850, left: 10, child: _startButton(context)),
+            Positioned(
+              top: 850,
+              left: 10,
+              child: _startButton(context, student.currentLevel),
+            ),
           ],
         ),
       ),
@@ -462,9 +466,9 @@ class _HomeStudentViewState extends State<HomeStudentView>
                         children: [
                           // Main Island Asset
                           Image.asset(
-                            level.levelNumber <= 3
+                            level.levelNumber <= 5
                                 ? 'assets/img/games/level${level.levelNumber}.png'
-                                : 'assets/img/games/level3.png', // Fallback for higher levels
+                                : 'assets/img/games/level3.png', // Fallback for > 5
                             width: 150,
                             height: 150,
                             fit: BoxFit.contain,
@@ -568,7 +572,9 @@ class _HomeStudentViewState extends State<HomeStudentView>
   // ---------------------------------------------------------------------------
   // START BUTTON (with pulse animation)
   // ---------------------------------------------------------------------------
-  Widget _startButton(BuildContext context) {
+  Widget _startButton(BuildContext context, int currentLevel) {
+    final bool isCurrentLevel = currentLevel == 1;
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 1000),
@@ -580,7 +586,7 @@ class _HomeStudentViewState extends State<HomeStudentView>
             children: [
               const SizedBox(height: 8),
 
-              // Pulsing start button
+              // Pulsing start button with character
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 1, end: 1.1),
                 duration: const Duration(milliseconds: 1000),
@@ -594,9 +600,42 @@ class _HomeStudentViewState extends State<HomeStudentView>
                       child: SizedBox(
                         width: 120,
                         height: 120,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Level 1 Island Image
+                            Center(
+                              child: Image.asset('assets/img/games/level1.png'),
+                            ),
 
-                        child: Center(
-                          child: Image.asset('assets/img/games/level1.png'),
+                            // Character (if current level is 1)
+                            if (isCurrentLevel)
+                              Positioned(
+                                top: -5,
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: 10),
+                                  duration: const Duration(milliseconds: 1500),
+                                  curve: Curves.easeInOut,
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset(
+                                        0,
+                                        value > 5 ? 10 - value : value,
+                                      ),
+                                      child: Image.asset(
+                                        'assets/img/games/char.png',
+                                        height: 70,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  },
+                                  onEnd: () {
+                                    if (mounted) setState(() {});
+                                  },
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),

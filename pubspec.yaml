@@ -26,6 +26,7 @@ dependencies:
   speech_to_text: ^7.3.0
   shared_preferences: ^2.5.3
   flutter_tts: ^4.2.3
+  audioplayers: ^6.5.1
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +40,7 @@ flutter:
     - assets/img/
     - assets/img/games/
     - assets/img/level/
+    - assets/audio/
   fonts:
     - family: Nunito
       fonts:

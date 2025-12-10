@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:audioplayers/audioplayers.dart';
+import 'package:ciloka_app/features/student/services/student_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:ciloka_app/core/routes/app_routes.dart';
 import '../../../../widgets/game_feedback_overlay.dart';
@@ -22,6 +25,10 @@ class _PengejaanViewState extends State<PengejaanView> {
   bool _isCorrect = false;
   bool _showCorrectOverlay = false;
   bool _showWrongOverlay = false;
+
+  final player = AudioPlayer();
+  int currentPoints = 10;
+  final StudentService _studentService = StudentService();
 
   final FlutterTts flutterTts = FlutterTts();
 
@@ -205,19 +212,35 @@ class _PengejaanViewState extends State<PengejaanView> {
     setState(() => _isListening = false);
   }
 
-  void _checkAnswer() {
+  Future<void> _checkAnswer() async {
     if (_spokenText.isEmpty || _isListening) return;
 
-    setState(() {
-      _isCorrect = _spokenText.trim() == _targetWord.toLowerCase();
-      if (_isCorrect) {
+    final isCorrect = _spokenText.trim() == _targetWord.toLowerCase();
+
+    if (isCorrect) {
+      await player.play(AssetSource('audio/correct.mp3'));
+
+      // Add points to Firestore
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await _studentService.addPoints(uid, currentPoints);
+      }
+
+      setState(() {
+        _isCorrect = true;
         _showCorrectOverlay = true;
         _showWrongOverlay = false;
-      } else {
+      });
+    } else {
+      await player.play(AssetSource('audio/wrong.mp3'));
+
+      setState(() {
+        currentPoints = (currentPoints - 2).clamp(0, 10);
+        _isCorrect = false;
         _showCorrectOverlay = false;
         _showWrongOverlay = true;
-      }
-    });
+      });
+    }
   }
 
   void _goToNextGame() {
@@ -235,6 +258,7 @@ class _PengejaanViewState extends State<PengejaanView> {
       _isListening = false;
       _showCorrectOverlay = false;
       _showWrongOverlay = false;
+      currentPoints = 10; // Reset points
     });
   }
 

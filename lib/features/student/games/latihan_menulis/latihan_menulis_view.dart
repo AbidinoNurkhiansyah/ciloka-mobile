@@ -1,4 +1,7 @@
 import 'package:ciloka_app/core/routes/app_routes.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:ciloka_app/features/student/services/student_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -26,6 +29,10 @@ class LatihanMenulisView extends StatefulWidget {
 class _LatihanMenulisViewState extends State<LatihanMenulisView> {
   int status = 0; // 0=normal, 2=benar, 3=salah
 
+  final player = AudioPlayer();
+  int currentPoints = 10;
+  final StudentService _studentService = StudentService();
+
   late String correctAnswer;
   late List<_LetterTile> availableLetters;
   late List<_LetterTile?> slotLetters;
@@ -44,6 +51,10 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     super.initState();
     correctAnswer = _getAnswer();
     _setupLetters();
+
+    // Preload sounds
+    player.setSource(AssetSource('audio/correct.mp3'));
+    player.setSource(AssetSource('audio/wrong.mp3'));
 
     flutterTts.awaitSpeakCompletion(true); // penting supaya progress keluar
 
@@ -201,18 +212,33 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
     slotLetters = List<_LetterTile?>.filled(chars.length, null);
   }
 
-  void _checkAnswer() {
+  Future<void> _checkAnswer() async {
     final userAnswer = slotLetters.map((t) => t?.char ?? '').join();
     if (userAnswer == correctAnswer) {
+      await player.play(AssetSource('audio/correct.mp3'));
+      // Add points to Firestore
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await _studentService.addPoints(uid, currentPoints);
+      } else {
+        debugPrint("User not logged in, points not saved.");
+      }
+
       HapticFeedback.mediumImpact(); // ✅ Aman & berfungsi
       setState(() {
         status = 2; // BENAR
       });
     } else {
-      HapticFeedback.lightImpact(); // ✅ Aman & berfungsi
+      await player.play(AssetSource('audio/wrong.mp3'));
+
+      // Deduction logic: 10 -> 8 -> 6 -> ... -> 0?
+      // "berkurang 2x sampai benar" assumtion: decrease by 2 each wrong attempt
       setState(() {
+        currentPoints = (currentPoints - 2).clamp(0, 10);
         status = 3; // SALAH
       });
+
+      HapticFeedback.lightImpact(); // ✅ Aman & berfungsi
     }
   }
 
@@ -504,9 +530,9 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
                         color: const Color(0xFFE8F5FF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        '+10 XP',
-                        style: TextStyle(
+                      child: Text(
+                        '+$currentPoints XP',
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1E98F5),

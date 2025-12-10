@@ -106,4 +106,22 @@ class StudentService {
       });
     }
   }
+
+  // --- 5. FUNGSI UPDATE POINTS ---
+  Future<void> addPoints(String uid, int pointsToAdd) async {
+    final query = await _firestore
+        .collection('student_index')
+        .where('studentId', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      final doc = query.docs.first;
+      final currentPoints = (doc.data()['totalPoints'] ?? 0) as int;
+      await doc.reference.update({'totalPoints': currentPoints + pointsToAdd});
+      debugPrint(
+        "DEBUG POINTS: Added $pointsToAdd points. Total: ${currentPoints + pointsToAdd}",
+      );
+    }
+  }
 }
