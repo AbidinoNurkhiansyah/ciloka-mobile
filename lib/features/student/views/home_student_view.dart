@@ -247,11 +247,11 @@ class _HomeStudentViewState extends State<HomeStudentView>
                 ),
                 AppSpacing.vSm,
                 Text(
-                  "Level ${student.currentLevel} dari 5 🎮",
+                  "Level ${student.currentLevel} dari 5",
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 AppSpacing.vSm,
@@ -481,10 +481,12 @@ class _HomeStudentViewState extends State<HomeStudentView>
                             width: 150,
                             height: 150,
                             fit: BoxFit.contain,
-                            color: isUnlocked ? null : Colors.grey,
                             colorBlendMode: isUnlocked
                                 ? null
-                                : BlendMode.saturation,
+                                : BlendMode.modulate,
+                            color: isUnlocked
+                                ? null
+                                : Colors.grey.withValues(alpha: 0.7),
                           ),
 
                           // Lock Overlay if locked
