@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:ciloka_app/core/routes/app_routes.dart';
 import '../../../../widgets/game_feedback_overlay.dart';
+import '../../../../widgets/exit_game_dialog.dart';
 
 class PengejaanView extends StatefulWidget {
   final int levelNumber;
@@ -361,7 +362,13 @@ class _PengejaanViewState extends State<PengejaanView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () async {
+              final shouldPop = await showExitGameDialog(context);
+
+              if (shouldPop == true && context.mounted) {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -435,233 +442,251 @@ class _PengejaanViewState extends State<PengejaanView> {
   Widget build(BuildContext context) {
     int targetLength = _targetWord.isEmpty ? 1 : _targetWord.length;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          Positioned(
-            top: -80,
-            left: -60,
-            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
-          ),
-          Positioned(
-            top: 40,
-            right: -40,
-            child: _bubble(110, const Color(0xFFFAE27C).withValues(alpha: 0.8)),
-          ),
-          // RUMPUT + HILL
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 150,
-              decoration: const BoxDecoration(
-                color: Color(0xFF6DD17C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 90,
-            left: -40,
-            child: _bubble(120, const Color(0xFF63C96C)),
-          ),
-          Positioned(
-            bottom: 70,
-            right: -30,
-            child: _bubble(100, const Color(0xFF59C263)),
-          ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-          SafeArea(
-            child: Column(
-              children: [
-                _buildAppBar(context),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            width: double.infinity,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16.0,
+        final shouldPop = await showExitGameDialog(context);
+
+        if (shouldPop == true && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            Positioned(
+              top: -80,
+              left: -60,
+              child: _bubble(
+                140,
+                const Color(0xFF92D8FF).withValues(alpha: 0.7),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: -40,
+              child: _bubble(
+                110,
+                const Color(0xFFFAE27C).withValues(alpha: 0.8),
+              ),
+            ),
+            // RUMPUT + HILL
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 150,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6DD17C),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 90,
+              left: -40,
+              child: _bubble(120, const Color(0xFF63C96C)),
+            ),
+            Positioned(
+              bottom: 70,
+              right: -30,
+              child: _bubble(100, const Color(0xFF59C263)),
+            ),
+
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildAppBar(context),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
                               ),
-                              child: _buildTargetWord(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.touch_app_rounded,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 6),
-                            Flexible(
+                              width: double.infinity,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16.0,
                                 ),
-                                child: Text(
-                                  'Klik speaker di atas untuk mendengar',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                child: _buildTargetWord(),
                               ),
                             ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            children: List.generate(
-                              targetLength,
-                              (index) => _buildLetterBox(index),
-                            ),
                           ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // --- Tombol Mic ---
-                        GestureDetector(
-                          onTap: _isListening
-                              ? _stopListening
-                              : _startListening,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            height: 100,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _isListening
-                                  ? Colors.lightGreen
-                                  : Colors.pinkAccent,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                _isListening ? Icons.hearing : Icons.mic,
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.touch_app_rounded,
+                                size: 18,
                                 color: Colors.white,
-                                size: 40,
                               ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Text(
-                          _isListening
-                              ? "Mendengarkan..."
-                              : _spokenText.isEmpty
-                              ? "Tekan Mic untuk Membaca"
-                              : "Kamu berkata: $_spokenText",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        // --- Tombol Cek & Ulangi ---
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_spokenText.isNotEmpty &&
-                                !_isListening &&
-                                !_isCorrect)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 20),
-                                child: ElevatedButton(
-                                  onPressed: _checkAnswer,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 14,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16.0,
                                   ),
-                                  child: const Text(
-                                    "Cek Jawaban",
+                                  child: Text(
+                                    'Klik speaker di atas untuk mendengar',
                                     style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                               ),
-                            ElevatedButton(
-                              onPressed: _resetGame,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              children: List.generate(
+                                targetLength,
+                                (index) => _buildLetterBox(index),
                               ),
-                              child: const Text(
-                                "Ulangi",
-                                style: TextStyle(
+                            ),
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          // --- Tombol Mic ---
+                          GestureDetector(
+                            onTap: _isListening
+                                ? _stopListening
+                                : _startListening,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              height: 100,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _isListening
+                                    ? Colors.lightGreen
+                                    : Colors.pinkAccent,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  _isListening ? Icons.hearing : Icons.mic,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
+                                  size: 40,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
 
-                        const SizedBox(height: 30),
-                      ],
+                          const SizedBox(height: 20),
+
+                          Text(
+                            _isListening
+                                ? "Mendengarkan..."
+                                : _spokenText.isEmpty
+                                ? "Tekan Mic untuk Membaca"
+                                : "Kamu berkata: $_spokenText",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          // --- Tombol Cek & Ulangi ---
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (_spokenText.isNotEmpty &&
+                                  !_isListening &&
+                                  !_isCorrect)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: ElevatedButton(
+                                    onPressed: _checkAnswer,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Cek Jawaban",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ElevatedButton(
+                                onPressed: _resetGame,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Ulangi",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 30),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          if (_showCorrectOverlay) CorrectOverlay(onContinue: _goToNextGame),
-          if (_showWrongOverlay)
-            IncorrectOverlay(
-              correctAnwerText: _targetWord,
-              onContinue: _resetGame,
-            ),
-        ],
+            if (_showCorrectOverlay) CorrectOverlay(onContinue: _goToNextGame),
+            if (_showWrongOverlay)
+              IncorrectOverlay(
+                correctAnwerText: _targetWord,
+                onContinue: _resetGame,
+              ),
+          ],
+        ),
       ),
     );
   }

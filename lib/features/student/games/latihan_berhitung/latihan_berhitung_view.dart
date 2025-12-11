@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:ciloka_app/features/student/services/student_service.dart';
 
 import '../../../../widgets/game_feedback_overlay.dart';
+import '../../../../widgets/exit_game_dialog.dart';
 import 'success_screen.dart';
 
 // --- DEFINISI WARNA ---
@@ -286,341 +287,368 @@ class _LatihanBerhitungViewState extends State<LatihanBerhitungView> {
     bool isCheckButtonEnabled =
         selectedNumber != null && (status == 0 || status == 1);
 
-    return Scaffold(
-      backgroundColor: primaryBlue,
-      body: Stack(
-        children: [
-          // BACKGROUND GRADIENT + BUBBLE
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // Show confirmation dialog
+        final shouldPop = await showExitGameDialog(context);
+
+        if (shouldPop == true && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: primaryBlue,
+        body: Stack(
+          children: [
+            // BACKGROUND GRADIENT + BUBBLE
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            top: -80,
-            left: -40,
-            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
-          ),
-          Positioned(
-            top: 30,
-            right: -30,
-            child: _bubble(110, const Color(0xFFFFF3B0).withValues(alpha: 0.9)),
-          ),
-          Positioned(
-            bottom: 120,
-            left: -30,
-            child: _bubble(100, const Color(0xFF6DD17C)),
-          ),
-          Positioned(
-            bottom: 90,
-            right: -40,
-            child: _bubble(130, const Color(0xFF5EC76D)),
-          ),
+            Positioned(
+              top: -80,
+              left: -40,
+              child: _bubble(
+                140,
+                const Color(0xFF92D8FF).withValues(alpha: 0.7),
+              ),
+            ),
+            Positioned(
+              top: 30,
+              right: -30,
+              child: _bubble(
+                110,
+                const Color(0xFFFFF3B0).withValues(alpha: 0.9),
+              ),
+            ),
+            Positioned(
+              bottom: 120,
+              left: -30,
+              child: _bubble(100, const Color(0xFF6DD17C)),
+            ),
+            Positioned(
+              bottom: 90,
+              right: -40,
+              child: _bubble(130, const Color(0xFF5EC76D)),
+            ),
 
-          SafeArea(
-            child: Column(
-              children: [
-                // HEADER
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+            SafeArea(
+              child: Column(
+                children: [
+                  // HEADER
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _circleButton(
+                          icon: Icons.arrow_back_ios_new_rounded,
+                          onTap: () async {
+                            // Show confirmation dialog when back button is pressed
+                            final shouldPop = await showExitGameDialog(context);
+
+                            if (shouldPop == true && context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'LATIHAN BERHITUNG',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                shadows: const [
+                                  Shadow(
+                                    blurRadius: 3,
+                                    color: Colors.black38,
+                                    offset: Offset(1, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            _buildLevelDots(),
+                          ],
+                        ),
+                        _circleButton(
+                          icon: Icons.volume_up_rounded,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _circleButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.pop(context),
+
+                  // TITLE SOAL
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      'Pilih Angka Terbesar',
+                      style: getStrokeTextStyle(
+                        Colors.white,
+                        Colors.deepOrange,
+                        30,
                       ),
-                      Column(
+                    ),
+                  ),
+
+                  // KARTU SOAL + GRID
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
+                      child: Column(
                         children: [
-                          Text(
-                            'LATIHAN BERHITUNG',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              shadows: const [
-                                Shadow(
-                                  blurRadius: 3,
-                                  color: Colors.black38,
-                                  offset: Offset(1, 1),
+                          // Kartu info level / instruksi
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.96),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEAF4FF),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(
+                                    Icons.calculate_rounded,
+                                    color: Color(0xFF1E98F5),
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Level ${widget.levelNumber} dari 5',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF333333),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Pilih angka yang nilainya paling besar di antara pilihan di bawah.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF666666),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          _buildLevelDots(),
+                          const SizedBox(height: 14),
+
+                          // Kartu grid angka
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.96),
+                                borderRadius: BorderRadius.circular(26),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: GridView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 1.5,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
+                                    ),
+                                itemCount: numbers.length,
+                                itemBuilder: (context, index) {
+                                  return _buildNumberButton(
+                                    numbers[index],
+                                    colors[index % colors.length],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      _circleButton(
-                        icon: Icons.volume_up_rounded,
-                        onTap: () {},
+                    ),
+                  ),
+
+                  // MASCOT + TEKS PETUNJUK
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8, top: 4),
+                    child: SizedBox(
+                      height: 110,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned(
+                            bottom: 0,
+                            child: Image.asset(
+                              'assets/img/bird_wizard.png',
+                              height: 90,
+                              errorBuilder: (c, e, s) => const Icon(
+                                Icons.flutter_dash,
+                                size: 80,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 0,
+                            left: 50,
+                            right: 50,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                selectedNumber == null
+                                    ? 'Klik salah satu angka dulu ya!'
+                                    : 'Sudah yakin? Tekan tombol hijau di bawah.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF444444),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-
-                // TITLE SOAL
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    'Pilih Angka Terbesar',
-                    style: getStrokeTextStyle(
-                      Colors.white,
-                      Colors.deepOrange,
-                      30,
                     ),
                   ),
-                ),
 
-                // KARTU SOAL + GRID
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
+                  // TOMBOL CEK JAWABAN
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: 10,
                     ),
-                    child: Column(
-                      children: [
-                        // Kartu info level / instruksi
-                        Container(
+                    child: GestureDetector(
+                      onTap: isCheckButtonEnabled ? _checkAnswer : null,
+                      child: Opacity(
+                        opacity: isCheckButtonEnabled ? 1.0 : 0.5,
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
+                            vertical: 13,
+                            horizontal: 24,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.96),
-                            borderRadius: BorderRadius.circular(24),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4CD964), Color(0xFF34C759)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.12),
+                                color: Colors.green.shade800.withValues(
+                                  alpha: 0.45,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF4FF),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Icon(
-                                  Icons.calculate_rounded,
-                                  color: Color(0xFF1E98F5),
-                                  size: 32,
-                                ),
+                              const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Level ${widget.levelNumber} dari 5',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF333333),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Pilih angka yang nilainya paling besar di antara pilihan di bawah.',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF666666),
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(width: 8),
+                              Text(
+                                'Cek Jawaban',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 14),
-
-                        // Kartu grid angka
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.96),
-                              borderRadius: BorderRadius.circular(26),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: GridView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    childAspectRatio: 1.5,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                  ),
-                              itemCount: numbers.length,
-                              itemBuilder: (context, index) {
-                                return _buildNumberButton(
-                                  numbers[index],
-                                  colors[index % colors.length],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // MASCOT + TEKS PETUNJUK
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8, top: 4),
-                  child: SizedBox(
-                    height: 110,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Positioned(
-                          bottom: 0,
-                          child: Image.asset(
-                            'assets/img/bird_wizard.png',
-                            height: 90,
-                            errorBuilder: (c, e, s) => const Icon(
-                              Icons.flutter_dash,
-                              size: 80,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: 50,
-                          right: 50,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              selectedNumber == null
-                                  ? 'Klik salah satu angka dulu ya!'
-                                  : 'Sudah yakin? Tekan tombol hijau di bawah.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF444444),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // TOMBOL CEK JAWABAN
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 24,
-                    right: 24,
-                    bottom: 10,
-                  ),
-                  child: GestureDetector(
-                    onTap: isCheckButtonEnabled ? _checkAnswer : null,
-                    child: Opacity(
-                      opacity: isCheckButtonEnabled ? 1.0 : 0.5,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 13,
-                          horizontal: 24,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF4CD964), Color(0xFF34C759)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.shade800.withValues(
-                                alpha: 0.45,
-                              ),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Cek Jawaban',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
-                ),
 
-                // TANAH
-                Container(
-                  height: 40,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/img/ground.png'),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
+                  // TANAH
+                  Container(
+                    height: 40,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/img/ground.png'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          _buildFeedbackOverlay(),
-        ],
+            _buildFeedbackOverlay(),
+          ],
+        ),
       ),
     );
   }

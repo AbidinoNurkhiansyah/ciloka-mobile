@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../../widgets/game_feedback_overlay.dart';
+import '../../../../widgets/exit_game_dialog.dart';
 
 // ---------------- MODEL HURUF ----------------
 class _LetterTile {
@@ -273,84 +274,103 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        final shouldPop = await showExitGameDialog(context);
+
+        if (shouldPop == true && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF6BCBFF), Color(0xFFB8E5FF)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            top: -80,
-            left: -60,
-            child: _bubble(140, const Color(0xFF92D8FF).withValues(alpha: 0.7)),
-          ),
-          Positioned(
-            top: 40,
-            right: -40,
-            child: _bubble(110, const Color(0xFFFAE27C).withValues(alpha: 0.8)),
-          ),
+            Positioned(
+              top: -80,
+              left: -60,
+              child: _bubble(
+                140,
+                const Color(0xFF92D8FF).withValues(alpha: 0.7),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: -40,
+              child: _bubble(
+                110,
+                const Color(0xFFFAE27C).withValues(alpha: 0.8),
+              ),
+            ),
 
-          Positioned(
-            bottom: 90,
-            left: -40,
-            child: _bubble(120, const Color(0xFFFAE27C)),
-          ),
-          Positioned(
-            bottom: 20,
-            right: -30,
-            child: _bubble(100, const Color(0xFFFAE27C)),
-          ),
+            Positioned(
+              bottom: 90,
+              left: -40,
+              child: _bubble(120, const Color(0xFFFAE27C)),
+            ),
+            Positioned(
+              bottom: 20,
+              right: -30,
+              child: _bubble(100, const Color(0xFFFAE27C)),
+            ),
 
-          SafeArea(
-            child: Column(
-              children: [
-                _buildAppBar(context),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 10),
-                          _buildHeaderCard(),
-                          const SizedBox(height: 18),
-                          _buildQuestionCard(),
-                          const SizedBox(height: 22),
-                          _buildChalkboard(),
-                          const SizedBox(height: 12),
-                          _buildHintText(),
-                          const SizedBox(height: 18),
-                          _buildLetterPool(),
-                        ],
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildAppBar(context),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            _buildHeaderCard(),
+                            const SizedBox(height: 18),
+                            _buildQuestionCard(),
+                            const SizedBox(height: 22),
+                            _buildChalkboard(),
+                            const SizedBox(height: 12),
+                            _buildHintText(),
+                            const SizedBox(height: 18),
+                            _buildLetterPool(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          _buildFeedbackOverlay(),
-        ],
-      ),
-      floatingActionButton: status == 2
-          ? null
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: _buildCheckButton(), // tetap gunakan tombol animasi kamu
+                ],
               ),
             ),
 
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+            _buildFeedbackOverlay(),
+          ],
+        ),
+        floatingActionButton: status == 2
+            ? null
+            : Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child:
+                      _buildCheckButton(), // tetap gunakan tombol animasi kamu
+                ),
+              ),
+
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
     );
   }
 
@@ -363,7 +383,13 @@ class _LatihanMenulisViewState extends State<LatihanMenulisView> {
         children: [
           _circleButton(
             icon: Icons.arrow_back_ios_new_rounded,
-            onTap: () => Navigator.pop(context),
+            onTap: () async {
+              final shouldPop = await showExitGameDialog(context);
+
+              if (shouldPop == true && context.mounted) {
+                Navigator.pop(context);
+              }
+            },
           ),
 
           Column(
