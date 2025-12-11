@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/global_navigator.dart';
+import '../../../widgets/animated_widgets.dart';
 
 class BookStudentView extends StatelessWidget {
   const BookStudentView({super.key});
@@ -270,25 +271,43 @@ class _InfoGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        const Row(
-          // const karena isinya statis sementara
+        Row(
           children: [
             Expanded(
-              child: _InfoCard(
-                title: 'Level 2',
-                subtitle: 'Level maksimum 2',
-                backgroundColor: Color(0xff60C0F3),
-                icon: Icons.rocket_launch_rounded,
+              child: Consumer<AuthStudentViewmodel>(
+                builder: (context, vm, _) {
+                  final student = vm.studentProfile;
+
+                  // Debug: Print student data
+                  debugPrint('📊 Student Profile Data: $student');
+                  debugPrint('📊 Current Level: ${student?['currentLevel']}');
+
+                  final currentLevel = student?['currentLevel'] ?? 1;
+
+                  return _InfoCard(
+                    title: 'Level $currentLevel',
+                    subtitle: 'dari 5 level',
+                    backgroundColor: const Color(0xff60C0F3),
+                    icon: Icons.rocket_launch_rounded,
+                  );
+                },
               ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
-              child: _InfoCard(
-                title: 'adada',
-                subtitle: 'Jumlah bintangmu',
-                backgroundColor: Color(0xffF8E2B0),
-                icon: Icons.star_rate_rounded,
-                iconColor: Colors.amber,
+              child: Consumer<AuthStudentViewmodel>(
+                builder: (context, vm, _) {
+                  final student = vm.studentProfile;
+                  final points = student?['points'] ?? 0;
+
+                  return _AnimatedInfoCard(
+                    value: points,
+                    subtitle: 'Total Poin',
+                    backgroundColor: const Color(0xffF8E2B0),
+                    icon: Icons.emoji_events_rounded,
+                    iconColor: Colors.amber,
+                  );
+                },
               ),
             ),
           ],
@@ -304,10 +323,71 @@ class _InfoCard extends StatelessWidget {
     required this.subtitle,
     required this.backgroundColor,
     required this.icon,
-    this.iconColor,
   });
 
   final String title;
+  final String subtitle;
+  final Color backgroundColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurface,
+          width: 3,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(icon, color: colorScheme.secondary, size: 24),
+          ),
+          AppSpacing.vSm,
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center, // Biar rapi kalau panjang
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Animated version of InfoCard for numeric values
+class _AnimatedInfoCard extends StatelessWidget {
+  const _AnimatedInfoCard({
+    required this.value,
+    required this.subtitle,
+    required this.backgroundColor,
+    required this.icon,
+    this.iconColor,
+  });
+
+  final int value;
   final String subtitle;
   final Color backgroundColor;
   final IconData icon;
@@ -343,16 +423,16 @@ class _InfoCard extends StatelessWidget {
             ),
           ),
           AppSpacing.vSm,
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          AnimatedCounter(
+            targetValue: value,
+            textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
           Text(
             subtitle,
-            textAlign: TextAlign.center, // Biar rapi kalau panjang
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withValues(alpha: 0.85),
               fontWeight: FontWeight.w800,
