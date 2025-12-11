@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../widgets/animated_widgets.dart';
+
 class ProfileStudentView extends StatelessWidget {
   const ProfileStudentView({super.key});
 
@@ -190,7 +192,8 @@ class ProfileStudentView extends StatelessWidget {
                                   context,
                                   icon: Icons.emoji_events_rounded,
                                   label: 'Level',
-                                  value: '${student.currentLevel}',
+                                  value: student.currentLevel,
+                                  suffix: '',
                                   subtitle: 'dari 5',
                                   color: const Color(0xFFFFB800),
                                   gradientColors: [
@@ -205,9 +208,10 @@ class ProfileStudentView extends StatelessWidget {
                                   context,
                                   icon: Icons.trending_up_rounded,
                                   label: 'Progress',
-                                  value:
-                                      '${(student.levelProgress * 100).toInt()}%',
-                                  subtitle: 'selesai',
+                                  value: (student.currentLevel / 5 * 100)
+                                      .toInt(),
+                                  suffix: '%',
+                                  subtitle: 'total',
                                   color: const Color(0xFF4CAF50),
                                   gradientColors: [
                                     const Color(0xFF4CAF50),
@@ -242,36 +246,37 @@ class ProfileStudentView extends StatelessWidget {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
-                                      'Progress Level',
+                                      'Progress Total',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.black87,
                                       ),
                                     ),
-                                    Text(
-                                      '${(student.levelProgress * 100).toInt()}%',
-                                      style: TextStyle(
+                                    AnimatedCounter(
+                                      targetValue:
+                                          (student.currentLevel / 5 * 100)
+                                              .toInt(),
+                                      suffix: '%',
+                                      textStyle: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         color: Theme.of(
                                           context,
-                                        ).colorScheme.primary,
+                                        ).colorScheme.surface,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                ClipRRect(
+                                AnimatedProgressBar(
+                                  value: student.currentLevel / 5,
+                                  minHeight: 10,
+                                  backgroundColor: Colors.grey.shade200,
+                                  valueColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  child: LinearProgressIndicator(
-                                    value: student.levelProgress,
-                                    minHeight: 10,
-                                    backgroundColor: Colors.grey.shade200,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
                                 ),
                               ],
                             ),
@@ -293,7 +298,8 @@ class ProfileStudentView extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String label,
-    required String value,
+    required int value,
+    required String suffix,
     required String subtitle,
     required Color color,
     required List<Color> gradientColors,
@@ -327,9 +333,10 @@ class ProfileStudentView extends StatelessWidget {
             child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
+          AnimatedCounter(
+            targetValue: value,
+            suffix: suffix,
+            textStyle: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
