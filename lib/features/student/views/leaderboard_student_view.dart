@@ -1,83 +1,88 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LeaderboardStudentView extends StatelessWidget {
   const LeaderboardStudentView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      return const Scaffold(body: Center(child: Text('Kamu belum login')));
-    }
+    return Consumer<AuthStudentViewmodel>(
+      builder: (context, authVm, _) {
+        final currentUid = authVm.authUid;
 
-    final String currentUid = currentUser.uid;
+        if (currentUid == null) {
+          return const Scaffold(body: Center(child: Text('Kamu belum login')));
+        }
 
-    final studentIndexStream = FirebaseFirestore.instance
-        .collection('student_index')
-        .where('studentId', isEqualTo: currentUid)
-        .limit(1)
-        .snapshots();
+        final studentIndexStream = FirebaseFirestore.instance
+            .collection('student_index')
+            .where('studentId', isEqualTo: currentUid)
+            .limit(1)
+            .snapshots();
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 145, 205, 255), // Light Blue
-              Color(0xFFB0DAFD), // Deep Blue
-            ],
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromARGB(255, 145, 205, 255), // Light Blue
+                  Color(0xFFB0DAFD), // Deep Blue
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: studentIndexStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return _buildErrorState(
+                      'Terjadi kesalahan mengambil data siswa',
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return _buildErrorState('Data siswa tidak ditemukan 😢');
+                  }
+
+                  final doc = snapshot.data!.docs.first;
+                  final data = doc.data() as Map<String, dynamic>;
+
+                  final String currentClassId =
+                      (data['classId'] ?? '') as String;
+                  final String currentTeacherId =
+                      (data['teacherId'] ?? '') as String;
+                  final String grade = (data['grade'] ?? '-') as String;
+                  final String className = (data['className'] ?? '-') as String;
+
+                  if (currentClassId.isEmpty || currentTeacherId.isEmpty) {
+                    return _buildErrorState('Data kelas belum lengkap');
+                  }
+
+                  return _LeaderboardContent(
+                    grade: grade,
+                    className: className,
+                    classId: currentClassId,
+                    teacherId: currentTeacherId,
+                    currentUid: currentUid,
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: studentIndexStream,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return _buildErrorState(
-                  'Terjadi kesalahan mengambil data siswa',
-                );
-              }
-
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                );
-              }
-
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return _buildErrorState('Data siswa tidak ditemukan 😢');
-              }
-
-              final doc = snapshot.data!.docs.first;
-              final data = doc.data() as Map<String, dynamic>;
-
-              final String currentClassId = (data['classId'] ?? '') as String;
-              final String currentTeacherId =
-                  (data['teacherId'] ?? '') as String;
-              final String grade = (data['grade'] ?? '-') as String;
-              final String className = (data['className'] ?? '-') as String;
-
-              if (currentClassId.isEmpty || currentTeacherId.isEmpty) {
-                return _buildErrorState('Data kelas belum lengkap');
-              }
-
-              return _LeaderboardContent(
-                grade: grade,
-                className: className,
-                classId: currentClassId,
-                teacherId: currentTeacherId,
-                currentUid: currentUid,
-              );
-            },
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 

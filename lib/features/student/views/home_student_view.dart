@@ -3,8 +3,9 @@ import 'package:ciloka_app/core/theme/app_spacing.dart';
 import 'package:ciloka_app/features/student/models/level_model.dart';
 import 'package:ciloka_app/features/student/models/user_student_model.dart';
 import 'package:ciloka_app/features/student/services/student_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:ciloka_app/core/routes/app_routes.dart';
 
 class HomeStudentView extends StatefulWidget {
@@ -59,67 +60,75 @@ class _HomeStudentViewState extends State<HomeStudentView>
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    final defaultStudent = StudentModel(
-      uid: uid ?? '',
-      username: '',
-      studentName: 'Siswa',
-      email: '',
-      photoUrl: '',
-      currentLevel: 1,
-      levelProgress: 0.1,
-    );
+    return Consumer<AuthStudentViewmodel>(
+      builder: (context, authVm, _) {
+        final uid = authVm.authUid;
+        final defaultStudent = StudentModel(
+          uid: uid ?? '',
+          username: '',
+          studentName: 'Siswa',
+          email: '',
+          photoUrl: '',
+          currentLevel: 1,
+          levelProgress: 0.1,
+        );
 
-    if (uid == null) {
-      final levels = LevelModel.getDefaultLevels(1);
+        if (uid == null) {
+          final levels = LevelModel.getDefaultLevels(1);
 
-      return Scaffold(
-        body: SafeArea(
-          child: _background(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: _levelMap(context, defaultStudent, levels),
+          return Scaffold(
+            body: SafeArea(
+              child: _background(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: _levelMap(context, defaultStudent, levels),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: _profile(context, defaultStudent),
+                    ),
+                  ],
                 ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: _profile(context, defaultStudent),
-                ),
-              ],
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: SafeArea(
+            child: _background(
+              child: StreamBuilder<StudentModel?>(
+                stream: StudentService().streamStudentProfile(uid),
+                builder: (context, snapshot) {
+                  final student = snapshot.data ?? defaultStudent;
+                  final levels = LevelModel.getDefaultLevels(
+                    student.currentLevel,
+                  );
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: _levelMap(context, student, levels),
+                      ),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: _profile(context, student),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      body: SafeArea(
-        child: _background(
-          child: StreamBuilder<StudentModel?>(
-            stream: StudentService().streamStudentProfile(uid),
-            builder: (context, snapshot) {
-              final student = snapshot.data ?? defaultStudent;
-              final levels = LevelModel.getDefaultLevels(student.currentLevel);
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned.fill(child: _levelMap(context, student, levels)),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: _profile(context, student),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -136,7 +145,7 @@ class _HomeStudentViewState extends State<HomeStudentView>
   Widget _profile(BuildContext context, StudentModel student) {
     final displayName = student.studentName.isNotEmpty
         ? student.studentName
-        : (FirebaseAuth.instance.currentUser?.displayName ?? "Siswa");
+        : "Siswa";
 
     final profileContent = _buildProfileContent(context, student, displayName);
 
