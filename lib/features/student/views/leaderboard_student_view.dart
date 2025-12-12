@@ -483,7 +483,7 @@ class Podium extends StatelessWidget {
   }
 }
 
-class _PodiumItem extends StatelessWidget {
+class _PodiumItem extends StatefulWidget {
   final _StudentEntry student;
   final int rank;
   final String currentUid;
@@ -499,163 +499,224 @@ class _PodiumItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isMe = student.studentId == currentUid;
-    // Gold, Silver, Bronze
-    final Color borderColor = rank == 1
-        ? const Color(0xFFFFD700)
-        : (rank == 2 ? const Color(0xFFC0C0C0) : const Color(0xFFCD7F32));
+  State<_PodiumItem> createState() => _PodiumItemState();
+}
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // Avatar + Crown
-        Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.none,
+class _PodiumItemState extends State<_PodiumItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Different delays for each rank: rank 1 appears first, then 2 and 3
+    final delayMs = widget.rank == 1 ? 200 : (widget.rank == 2 ? 400 : 600);
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _slideAnimation =
+        Tween<Offset>(
+          begin: const Offset(0, 1.5), // Start from below
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutBack,
+          ),
+        );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    // Start animation after delay
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMe = widget.student.studentId == widget.currentUid;
+    // Gold, Silver, Bronze
+    final Color borderColor = widget.rank == 1
+        ? const Color(0xFFFFD700)
+        : (widget.rank == 2
+              ? const Color(0xFFC0C0C0)
+              : const Color(0xFFCD7F32));
+
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: borderColor,
-                  width: isFirst ? 3.5 : 2.5,
+            // Avatar + Crown
+            Stack(
+              alignment: Alignment.topCenter,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: borderColor,
+                      width: widget.isFirst ? 3.5 : 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: widget.isFirst ? 40 : 30, // Larger avatars
+                    backgroundImage: widget.student.photoUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(widget.student.photoUrl)
+                        : null,
+                    child: widget.student.photoUrl.isEmpty
+                        ? Icon(
+                            Icons.person,
+                            color: Colors.grey,
+                            size: widget.isFirst ? 30 : 24,
+                          )
+                        : null,
+                  ),
                 ),
-                boxShadow: [
+                if (widget.isFirst)
+                  Positioned(
+                    top: -26,
+                    child: const Icon(
+                      Icons.workspace_premium,
+                      color: Color(0xFFFFD700),
+                      size: 36,
+                    ),
+                  ),
+                Positioned(
+                  bottom: -10,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      "${widget.rank}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Name
+            Text(
+              widget.student.studentName,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
+                fontSize: widget.isFirst ? 15 : 13,
+                shadows: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
                   ),
                 ],
               ),
-              child: CircleAvatar(
-                radius: isFirst ? 40 : 30, // Larger avatars
-                backgroundImage: student.photoUrl.isNotEmpty
-                    ? CachedNetworkImageProvider(student.photoUrl)
-                    : null,
-                child: student.photoUrl.isEmpty
-                    ? Icon(
-                        Icons.person,
-                        color: Colors.grey,
-                        size: isFirst ? 30 : 24,
-                      )
-                    : null,
+            ),
+            Text(
+              "Lvl ${widget.student.level}",
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            if (isFirst)
-              Positioned(
-                top: -26,
-                child: const Icon(
-                  Icons.workspace_premium,
-                  color: Color(0xFFFFD700),
-                  size: 36,
-                ),
-              ),
-            Positioned(
-              bottom: -10,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: borderColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
+            const SizedBox(height: 8),
+
+            // Podium Box
+            Container(
+              height: widget.height - 60,
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.25),
+                    Colors.white.withValues(alpha: 0.05),
                   ],
                 ),
-                child: Text(
-                  "$rank",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
+                  left: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 0.5,
+                  ),
+                  right: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 0.5,
                   ),
                 ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${widget.student.totalPoints} PTS",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // Name
-        Text(
-          student.studentName,
-          maxLines: 1,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
-            fontSize: isFirst ? 15 : 13,
-            shadows: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 1),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          "Lvl ${student.level}",
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Podium Box
-        Container(
-          height: height - 60,
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withValues(alpha: 0.25),
-                Colors.white.withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            border: Border(
-              top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.4),
-                width: 1,
-              ),
-              left: BorderSide(
-                color: Colors.white.withValues(alpha: 0.4),
-                width: 0.5,
-              ),
-              right: BorderSide(
-                color: Colors.white.withValues(alpha: 0.4),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "${student.totalPoints} PTS",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
