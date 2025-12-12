@@ -14,8 +14,14 @@ import '../viewmodels/chat_room_viewmodel.dart';
 class ChatPage extends StatefulWidget {
   final String teacherId;
   final String studentId;
+  final bool isTeacherView; // true jika dibuka oleh teacher, false jika student
 
-  const ChatPage({super.key, required this.teacherId, required this.studentId});
+  const ChatPage({
+    super.key,
+    required this.teacherId,
+    required this.studentId,
+    this.isTeacherView = false,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -30,11 +36,13 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
 
     final authVm = context.read<AuthStudentViewmodel>();
-    final studentId = authVm.authUid!;
+    final consistentStudentId = authVm.getConsistentStudentId();
     final studentName = authVm.studentName ?? "Anak Hebat";
 
-    final chatVm = context.read<ChatRoomViewmodel>();
-    chatVm.init(widget.teacherId, studentId, studentName);
+    if (consistentStudentId != null) {
+      final chatVm = context.read<ChatRoomViewmodel>();
+      chatVm.init(widget.teacherId, consistentStudentId, studentName);
+    }
   }
 
   @override
@@ -121,17 +129,10 @@ class _ChatPageState extends State<ChatPage> {
 
                                 final messages = snapshot.data!.docs.reversed
                                     .toList();
-                                final authStudentVm = context
-                                    .read<AuthStudentViewmodel>();
-
-                                final String currentUserId =
-                                    authStudentVm.status ==
-                                        FirebaseAuthStatus.authenticated
-                                    ? authStudentVm.authUid! // siswa login
-                                    : widget.teacherId; // guru login
 
                                 return ListView.builder(
-                                  reverse: true,
+                                  reverse:
+                                      true, // Mulai dari bawah seperti WhatsApp
                                   padding: const EdgeInsets.fromLTRB(
                                     10,
                                     6,
@@ -148,7 +149,16 @@ class _ChatPageState extends State<ChatPage> {
                                     final senderId = msg['senderId'] ?? '';
                                     final senderName =
                                         msg['senderName'] ?? 'Guru';
-                                    final isMe = senderId == currentUserId;
+
+                                    // Tentukan apakah pesan ini dari user yang sedang melihat
+                                    bool isMe;
+                                    if (widget.isTeacherView) {
+                                      // Jika teacher yang buka, pesan dari teacher ada di kanan
+                                      isMe = senderId == widget.teacherId;
+                                    } else {
+                                      // Jika student yang buka, pesan dari student ada di kanan
+                                      isMe = senderId == widget.studentId;
+                                    }
 
                                     final content = msg['content'] ?? '';
                                     final imageUrl = msg['imageUrl'];
@@ -444,11 +454,12 @@ class _ChatPageState extends State<ChatPage> {
               );
 
               final authVm = context.read<AuthStudentViewmodel>();
+              final consistentStudentId = authVm.getConsistentStudentId();
               final studentName = authVm.studentName ?? "Anak Hebat";
 
-              if (picked != null) {
+              if (picked != null && consistentStudentId != null) {
                 await vm.sendImageMessage(
-                  senderId: authVm.authUid!,
+                  senderId: consistentStudentId,
                   senderName: studentName,
                   imageFile: File(picked.path),
                 );
@@ -532,8 +543,11 @@ class _ChatPageState extends State<ChatPage> {
     final authStudentVm = context.read<AuthStudentViewmodel>();
 
     if (authStudentVm.status == FirebaseAuthStatus.authenticated) {
-      // Siswa login
-      senderId = authStudentVm.authUid!;
+      // Siswa login - gunakan consistent student ID
+      final consistentStudentId = authStudentVm.getConsistentStudentId();
+      if (consistentStudentId == null) return;
+
+      senderId = consistentStudentId;
       senderName = authStudentVm.studentName ?? "Anak Hebat";
     } else {
       // Guru login

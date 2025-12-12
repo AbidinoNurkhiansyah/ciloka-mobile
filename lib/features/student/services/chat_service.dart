@@ -30,6 +30,16 @@ class ChatService {
     }
   }
 
+  // 🔹 Generate consistent student ID from student data
+  String generateStudentId(String grade, String className, String studentName) {
+    // Create a consistent ID based on student data
+    // Format: grade_className_studentName (lowercase, no spaces)
+    final cleanGrade = grade.toLowerCase().replaceAll(' ', '');
+    final cleanClassName = className.toLowerCase().replaceAll(' ', '');
+    final cleanStudentName = studentName.toLowerCase().replaceAll(' ', '');
+    return '${cleanGrade}_${cleanClassName}_$cleanStudentName';
+  }
+
   // 🔹 Get chat room ID
   String getRoomId(String teacherId, String studentId) {
     return '${teacherId}_$studentId';

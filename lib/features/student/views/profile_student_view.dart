@@ -368,6 +368,7 @@ class ProfileStudentView extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -375,15 +376,12 @@ class ProfileStudentView extends StatelessWidget {
             children: [
               Icon(Icons.logout_rounded, color: Colors.red),
               SizedBox(width: 10),
-              Text(
-                "Konfirmasi Keluar",
-                style: TextStyle(color: Color(0xff1e1e1e)),
-              ),
+              Text("Konfirmasi Keluar", style: TextStyle(color: Colors.white)),
             ],
           ),
           content: const Text(
             "Apakah Anda yakin ingin keluar?",
-            style: TextStyle(color: Color(0xff797979)),
+            style: TextStyle(color: Colors.white),
           ),
           actions: [
             TextButton(
@@ -393,7 +391,7 @@ class ProfileStudentView extends StatelessWidget {
               child: Text(
                 "Tidak",
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -420,7 +418,10 @@ class ProfileStudentView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text('Ya, Keluar'),
+              child: Text(
+                'Ya, Keluar',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );

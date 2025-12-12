@@ -135,16 +135,21 @@ class BookStudentView extends StatelessWidget {
                 Consumer<AuthStudentViewmodel>(
                   builder: (context, vm, _) {
                     // Pastikan ID sudah ready
-                    if (vm.teacherId == null || vm.authUid == null) {
+                    if (vm.teacherId == null) {
                       return SizedBox(); // or loading
                     }
 
                     final teacherId = vm.teacherId!;
-                    final studentId = vm.authUid!;
+                    final consistentStudentId = vm.getConsistentStudentId();
+
+                    // Jika consistent student ID belum ready, jangan tampilkan chat button
+                    if (consistentStudentId == null) {
+                      return SizedBox();
+                    }
 
                     return _ChatCallout(
                       teacherId: teacherId,
-                      studentId: studentId,
+                      studentId: consistentStudentId,
                     );
                   },
                 ),

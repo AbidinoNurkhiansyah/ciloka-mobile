@@ -99,7 +99,7 @@ class _LoginStudentViewState extends State<LoginStudentView> {
                               controller: _nisController,
                               label: 'NIS',
                               hint: 'Masukkan NIS kamu',
-                              prefixIcon: Icons.numbers,
+                              prefixIcon: Icons.badge,
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {

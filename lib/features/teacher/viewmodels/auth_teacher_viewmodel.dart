@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_teacher_model.dart';
 import '../services/profile_teacher_service.dart';
@@ -30,6 +31,27 @@ class AuthTeacherViewmodel extends ChangeNotifier {
 
   void updateAuthService(FirebaseAuthService service) {
     _authService = service;
+  }
+
+  // Load teacher session dari SharedPreferences
+  Future<void> loadTeacherSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final teacherUid = prefs.getString('logged_teacher_uid');
+    final userRole = prefs.getString('user_role');
+
+    if (teacherUid != null && userRole == 'teacher') {
+      _status = FirebaseAuthStatus.authenticated;
+
+      await _teacherSubscription?.cancel();
+
+      // Set stream realtime
+      _teacherStream = _teacherService.streamTeacherProfile(teacherUid);
+      notifyListeners();
+      _teacherSubscription = _teacherStream!.listen((teacher) {
+        _currentTeacher = teacher;
+        notifyListeners();
+      });
+    }
   }
 
   Future<void> register(
@@ -106,6 +128,11 @@ class AuthTeacherViewmodel extends ChangeNotifier {
       if (user == null) throw Exception('User tidak ditemukan');
       _status = FirebaseAuthStatus.authenticated;
 
+      // Simpan UID teacher ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_teacher_uid', user.uid);
+      await prefs.setString('user_role', 'teacher');
+
       await _teacherSubscription?.cancel();
 
       // Set stream realtime
@@ -151,7 +178,17 @@ class AuthTeacherViewmodel extends ChangeNotifier {
 
     try {
       await _authService.signOut();
+
+      // Hapus session dari SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('logged_teacher_uid');
+      await prefs.remove('user_role');
+
+      _currentTeacher = null;
       _status = FirebaseAuthStatus.unauthenticated;
+
+      // Navigate ke select role
+      GlobalNavigator.pushReplacementNamed(AppRoutes.selectRole);
     } catch (e, stack) {
       GlobalErrorHandler.handle(context, e, stack);
     } finally {

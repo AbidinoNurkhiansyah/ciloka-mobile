@@ -64,16 +64,25 @@ class TeacherChatListPage extends StatelessWidget {
                       const Icon(Icons.circle, color: Colors.red, size: 10),
                   ],
                 ),
-                onTap: () {
-                  FirebaseFirestore.instance
+                onTap: () async {
+                  // Update isReadByTeacher hanya jika room sudah ada
+                  final roomRef = FirebaseFirestore.instance
                       .collection('story_rooms')
-                      .doc("${teacherId}_${studentId}")
-                      .set({'isReadByTeacher': true}, SetOptions(merge: true));
+                      .doc("${teacherId}_${studentId}");
+
+                  final roomDoc = await roomRef.get();
+                  if (roomDoc.exists) {
+                    await roomRef.update({'isReadByTeacher': true});
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ChatPage(teacherId: teacherId, studentId: studentId),
+                      builder: (_) => ChatPage(
+                        teacherId: teacherId,
+                        studentId: studentId,
+                        isTeacherView: true, // Teacher yang membuka
+                      ),
                     ),
                   );
                 },

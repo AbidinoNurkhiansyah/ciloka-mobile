@@ -1,7 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/routes/app_routes.dart';
+import 'teacher/viewmodels/auth_teacher_viewmodel.dart';
+import 'student/viewmodels/auth_student_viewmodel.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -46,17 +50,40 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
 
-    Future.delayed(Duration(seconds: 3), () {
-      if (!mounted) return;
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Sudah login anonymous, langsung ke mainStudent
-        Navigator.pushReplacementNamed(context, AppRoutes.mainStudent);
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    await Future.delayed(Duration(seconds: 3));
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final userRole = prefs.getString('user_role');
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      if (userRole == 'teacher') {
+        // Load session teacher
+        if (mounted) {
+          final authTeacherVm = context.read<AuthTeacherViewmodel>();
+          await authTeacherVm.loadTeacherSession();
+          Navigator.pushReplacementNamed(context, AppRoutes.mainTeacher);
+        }
+      } else if (userRole == 'student') {
+        // Load session student (jika perlu)
+        if (mounted) {
+          final authStudentVm = context.read<AuthStudentViewmodel>();
+          await authStudentVm.loadStudentProfile(); // Reload data student
+          Navigator.pushReplacementNamed(context, AppRoutes.mainStudent);
+        }
       } else {
-        // Belum login, ke selectRole
-        Navigator.pushReplacementNamed(context, AppRoutes.selectRole);
+        // Fallback jika user ada tapi role tidak jelas (biasanya student lama)
+        Navigator.pushReplacementNamed(context, AppRoutes.mainStudent);
       }
-    });
+    } else {
+      // Belum login
+      Navigator.pushReplacementNamed(context, AppRoutes.selectRole);
+    }
   }
 
   @override

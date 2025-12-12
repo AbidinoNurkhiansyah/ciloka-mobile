@@ -70,6 +70,18 @@ class RouteGenerator {
       case AppRoutes.mainStudent:
         return MaterialPageRoute(builder: (_) => const MainStudentView());
       case AppRoutes.chatStudent:
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final teacherId = args['teacherId'] as String;
+          final studentId = args['studentId'] as String;
+          return MaterialPageRoute(
+            builder: (_) => ChatPage(
+              teacherId: teacherId,
+              studentId: studentId,
+              isTeacherView: false, // Student yang membuka
+            ),
+          );
+        }
         return MaterialPageRoute(
           builder: (_) =>
               const ChatPage(teacherId: 'teacherId', studentId: 'studentId'),

@@ -29,6 +29,23 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
   String? get authUid => FirebaseAuth.instance.currentUser?.uid;
 
+  // Generate consistent student ID based on student data
+  String? getConsistentStudentId() {
+    if (studentProfile == null) return null;
+
+    final grade = studentProfile?['grade']?.toString() ?? '';
+    final className = studentProfile?['className'] ?? '';
+    final name = studentProfile?['studentName'] ?? '';
+
+    if (grade.isEmpty || className.isEmpty || name.isEmpty) return null;
+
+    // Create a consistent ID based on student data
+    final cleanGrade = grade.toLowerCase().replaceAll(' ', '');
+    final cleanClassName = className.toLowerCase().replaceAll(' ', '');
+    final cleanStudentName = name.toLowerCase().replaceAll(' ', '');
+    return '${cleanGrade}_${cleanClassName}_$cleanStudentName';
+  }
+
   void updateService(AuthStudentService service) {
     _studentService = service;
   }
@@ -98,6 +115,7 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
             final prefs = await SharedPreferences.getInstance();
             prefs.setString('logged_nis', nis);
+            prefs.setString('user_role', 'student');
           }
         });
 
@@ -134,6 +152,11 @@ class AuthStudentViewmodel extends ChangeNotifier {
 
     try {
       await FirebaseAuth.instance.signOut();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('logged_nis');
+      await prefs.remove('user_role');
+
       _currentStudentData = null;
       _status = FirebaseAuthStatus.unauthenticated;
       GlobalNavigator.pushReplacementNamed(AppRoutes.loginStudent);
