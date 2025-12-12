@@ -1,11 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/global_navigator.dart';
+import '../../../core/utils/global_snackbar.dart';
 import '../models/class_student_model.dart';
+import '../viewmodels/auth_teacher_viewmodel.dart';
 import '../viewmodels/student_list_viewmodel.dart';
 
 class ClassStudentListView extends StatelessWidget {
@@ -49,9 +52,25 @@ class ClassStudentListView extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () {
-                    GlobalNavigator.pushReplacementNamed(
-                      AppRoutes.listChatStudent,
-                    );
+                    String? teacherId = FirebaseAuth.instance.currentUser?.uid;
+
+                    // Fallback: Coba ambil dari Provider jika Auth instance null
+                    if (teacherId == null) {
+                      final authVm = context.read<AuthTeacherViewmodel>();
+                      teacherId = authVm.currentTeacher?.uid;
+                    }
+
+                    if (teacherId != null && teacherId.isNotEmpty) {
+                      GlobalNavigator.pushNamed(
+                        AppRoutes.listChatStudent,
+                        arguments: teacherId,
+                      );
+                    } else {
+                      GlobalSnackBar.showError(
+                        context,
+                        'Gagal memuat sesi guru. Silakan login ulang.',
+                      );
+                    }
                   },
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
                   color: colorScheme.onSurface,

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/static/firebase_auth_status.dart';
 import '../../../core/utils/colors.dart';
 import '../viewmodels/auth_student_viewmodel.dart';
 import '../viewmodels/chat_room_viewmodel.dart';
@@ -29,6 +28,7 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -36,13 +36,18 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
 
     final authVm = context.read<AuthStudentViewmodel>();
-    final consistentStudentId = authVm.getConsistentStudentId();
-    final studentName = authVm.studentName ?? "Anak Hebat";
+    final studentName = authVm.studentName ?? "Siswa";
 
-    if (consistentStudentId != null) {
-      final chatVm = context.read<ChatRoomViewmodel>();
-      chatVm.init(widget.teacherId, consistentStudentId, studentName);
-    }
+    final chatVm = context.read<ChatRoomViewmodel>();
+    // Inisialisasi room
+    chatVm.init(widget.teacherId, widget.studentId, studentName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,7 +55,6 @@ class _ChatPageState extends State<ChatPage> {
     final vm = context.watch<ChatRoomViewmodel>();
 
     return Scaffold(
-      // Background full layar
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -65,12 +69,9 @@ class _ChatPageState extends State<ChatPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header lucu
               _buildCuteHeader(context),
-
               const SizedBox(height: 8),
 
-              // Card utama isi chat
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -100,10 +101,7 @@ class _ChatPageState extends State<ChatPage> {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(top: 16),
-                                      child: CircularProgressIndicator(),
-                                    ),
+                                    child: CircularProgressIndicator(),
                                   );
                                 }
 
@@ -127,15 +125,28 @@ class _ChatPageState extends State<ChatPage> {
                                   return _buildEmptyState();
                                 }
 
-                                final messages = snapshot.data!.docs.reversed
-                                    .toList();
+                                // Data tidak direverse -> Urutan Ascending (Lama -> Baru)
+                                final messages = snapshot.data!.docs;
+
+                                // Auto Scroll ke Bawah jika data baru masuk
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (_scrollController.hasClients) {
+                                    _scrollController.jumpTo(
+                                      _scrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    );
+                                  }
+                                });
 
                                 return ListView.builder(
-                                  reverse:
-                                      true, // Mulai dari bawah seperti WhatsApp
+                                  controller: _scrollController,
+                                  reverse: false, // Top-to-Bottom
                                   padding: const EdgeInsets.fromLTRB(
                                     10,
-                                    6,
+                                    14,
                                     10,
                                     14,
                                   ),
@@ -148,27 +159,30 @@ class _ChatPageState extends State<ChatPage> {
                                     final isImage = msg['type'] == 'image';
                                     final senderId = msg['senderId'] ?? '';
                                     final senderName =
-                                        msg['senderName'] ?? 'Guru';
-
-                                    // Tentukan apakah pesan ini dari user yang sedang melihat
-                                    bool isMe;
-                                    if (widget.isTeacherView) {
-                                      // Jika teacher yang buka, pesan dari teacher ada di kanan
-                                      isMe = senderId == widget.teacherId;
-                                    } else {
-                                      // Jika student yang buka, pesan dari student ada di kanan
-                                      isMe = senderId == widget.studentId;
-                                    }
-
+                                        msg['senderName'] ??
+                                        ''; // Default empty string agar tidak muncul (Guru)
                                     final content = msg['content'] ?? '';
                                     final imageUrl = msg['imageUrl'];
                                     final timestamp =
                                         (msg['timestamp'] as Timestamp?)
                                             ?.toDate();
 
+                                    // Logic Determine isMe
+                                    bool isMe;
+                                    if (widget.isTeacherView) {
+                                      isMe =
+                                          senderId.trim() ==
+                                          widget.teacherId.trim();
+                                    } else {
+                                      isMe =
+                                          senderId.trim() ==
+                                          widget.studentId.trim();
+                                    }
+
                                     return _buildMessageBubble(
                                       context: context,
                                       isMe: isMe,
+                                      senderId: senderId,
                                       senderName: senderName,
                                       isImage: isImage,
                                       content: content,
@@ -188,7 +202,6 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
             ],
           ),
@@ -197,15 +210,13 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ================== HEADER ==================
-
   Widget _buildCuteHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios),
+            icon: const Icon(Icons.arrow_back_ios),
             onPressed: () => Navigator.of(context).pop(),
           ),
           Container(
@@ -277,8 +288,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ================== EMPTY STATE ==================
-
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -308,22 +317,26 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ================== BUBBLE CHAT ==================
-
   Widget _buildMessageBubble({
     required BuildContext context,
     required bool isMe,
+    required String senderId,
     required String senderName,
     required bool isImage,
     required String content,
     required String? imageUrl,
     required DateTime? timestamp,
   }) {
-    final bubbleColor = isMe
-        ? const Color(0xFFFFF59D) // kuning lembut untuk anak
-        : chatGreen; // hijau untuk guru
-    final textColor = isMe ? Colors.brown[900]! : Colors.white;
-    final align = isMe ? Alignment.centerRight : Alignment.centerLeft;
+    // Logika Warna
+    final bool isMessageFromTeacher = senderId == widget.teacherId;
+
+    final bubbleColor = isMessageFromTeacher
+        ? chatGreen
+        : const Color(0xFFFFF59D);
+
+    final textColor = isMessageFromTeacher ? Colors.white : Colors.brown[900]!;
+
+    final align = isMe ? Alignment.topRight : Alignment.topLeft;
 
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(20),
@@ -332,9 +345,20 @@ class _ChatPageState extends State<ChatPage> {
       bottomRight: Radius.circular(isMe ? 6 : 20),
     );
 
-    final label = isMe
-        ? "🧒 Kamu"
-        : "👩‍🏫 ${senderName.isEmpty ? 'Guru' : senderName}";
+    // Label Logic
+    String label;
+    String roleLabel = "";
+    if (isMessageFromTeacher) {
+      // Pesan Guru
+      roleLabel = isMe ? "Anda (Guru)" : "Guru";
+    } else {
+      // Pesan Siswa
+      roleLabel = isMe
+          ? "Anda (Siswa)"
+          : "Siswa ${senderName.isEmpty ? '' : '($senderName)'}".trim();
+    }
+
+    label = roleLabel;
 
     return Align(
       alignment: align,
@@ -362,7 +386,6 @@ class _ChatPageState extends State<ChatPage> {
                 : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Nama + role
               Text(
                 label,
                 style: TextStyle(
@@ -372,8 +395,6 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
               const SizedBox(height: 4),
-
-              // Isi pesan
               if (isImage && imageUrl != null) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
@@ -388,10 +409,7 @@ class _ChatPageState extends State<ChatPage> {
                   style: TextStyle(fontSize: 14, height: 1.3, color: textColor),
                 ),
               ],
-
               const SizedBox(height: 4),
-
-              // Jam kecil
               if (timestamp != null)
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -421,8 +439,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ================== INPUT AREA ==================
-
   Widget _buildInputArea(ChatRoomViewmodel vm) {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
@@ -442,7 +458,6 @@ class _ChatPageState extends State<ChatPage> {
       ),
       child: Row(
         children: [
-          // Tombol gambar
           _buildRoundIconButton(
             icon: Icons.image_rounded,
             tooltip: "Kirim gambar lucu 📷",
@@ -452,48 +467,42 @@ class _ChatPageState extends State<ChatPage> {
               final picked = await _picker.pickImage(
                 source: ImageSource.gallery,
               );
-
-              final authVm = context.read<AuthStudentViewmodel>();
-              final consistentStudentId = authVm.getConsistentStudentId();
-              final studentName = authVm.studentName ?? "Anak Hebat";
-
-              if (picked != null && consistentStudentId != null) {
-                await vm.sendImageMessage(
-                  senderId: consistentStudentId,
-                  senderName: studentName,
-                  imageFile: File(picked.path),
-                );
+              if (picked != null) {
+                String senderId;
+                String senderName;
+                if (widget.isTeacherView) {
+                  senderId = widget.teacherId;
+                  senderName = "Guru";
+                } else {
+                  final authVm = context.read<AuthStudentViewmodel>();
+                  senderId = authVm.getConsistentStudentId() ?? '';
+                  senderName = authVm.studentName ?? "Anak Hebat";
+                }
+                if (senderId.isNotEmpty) {
+                  await vm.sendImageMessage(
+                    senderId: senderId,
+                    senderName: senderName,
+                    imageFile: File(picked.path),
+                  );
+                }
               }
             },
           ),
-
           const SizedBox(width: 8),
-
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            child: TextFormField(
+              controller: _controller,
+              textInputAction: TextInputAction.send,
+              onFieldSubmitted: (_) => _onSendPressed(vm),
+              decoration: const InputDecoration(
+                hintText: "Tulis pesan manis di sini... ✨",
+                border: InputBorder.none,
+                isDense: true,
               ),
-              child: TextFormField(
-                controller: _controller,
-                textInputAction: TextInputAction.send,
-                onFieldSubmitted: (_) => _onSendPressed(vm),
-                decoration: const InputDecoration(
-                  hintText: "Tulis pesan manis di sini... ✨",
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF424242)),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF424242)),
             ),
           ),
-
           const SizedBox(width: 8),
-
-          // Tombol kirim
           _buildRoundIconButton(
             icon: Icons.send_rounded,
             tooltip: "Kirim pesan 🚀",
@@ -531,28 +540,22 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ================== LOGIC KIRIM PESAN ==================
-
   Future<void> _onSendPressed(ChatRoomViewmodel vm) async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
     String senderId;
     String senderName;
-
     final authStudentVm = context.read<AuthStudentViewmodel>();
 
-    if (authStudentVm.status == FirebaseAuthStatus.authenticated) {
-      // Siswa login - gunakan consistent student ID
-      final consistentStudentId = authStudentVm.getConsistentStudentId();
-      if (consistentStudentId == null) return;
-
-      senderId = consistentStudentId;
-      senderName = authStudentVm.studentName ?? "Anak Hebat";
-    } else {
-      // Guru login
+    if (widget.isTeacherView) {
       senderId = widget.teacherId;
       senderName = "Guru";
+    } else {
+      final consistentStudentId = authStudentVm.getConsistentStudentId();
+      if (consistentStudentId == null) return;
+      senderId = consistentStudentId;
+      senderName = authStudentVm.studentName ?? "Anak Hebat";
     }
 
     await vm.sendTextMessage(

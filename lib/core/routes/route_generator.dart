@@ -41,8 +41,11 @@ class RouteGenerator {
       case AppRoutes.mainTeacher:
         return MaterialPageRoute(builder: (_) => const MainTeacherView());
       case AppRoutes.listChatStudent:
+        final teacherId = settings.arguments is String
+            ? settings.arguments as String
+            : '';
         return MaterialPageRoute(
-          builder: (_) => const TeacherChatListPage(teacherId: 'teacherId'),
+          builder: (_) => TeacherChatListPage(teacherId: teacherId),
         );
 
       case AppRoutes.classDataTeacher:
