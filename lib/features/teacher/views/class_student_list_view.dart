@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +8,9 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/global_navigator.dart';
 import '../../../core/utils/global_snackbar.dart';
+import '../../student/services/chat_service.dart';
 import '../models/class_student_model.dart';
+import '../services/upload_image_service.dart';
 import '../viewmodels/auth_teacher_viewmodel.dart';
 import '../viewmodels/student_list_viewmodel.dart';
 
@@ -45,64 +48,7 @@ class ClassStudentListView extends StatelessWidget {
           ),
         ),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: AppSpacing.sm),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    String? teacherId = FirebaseAuth.instance.currentUser?.uid;
-
-                    // Fallback: Coba ambil dari Provider jika Auth instance null
-                    if (teacherId == null) {
-                      final authVm = context.read<AuthTeacherViewmodel>();
-                      teacherId = authVm.currentTeacher?.uid;
-                    }
-
-                    if (teacherId != null && teacherId.isNotEmpty) {
-                      GlobalNavigator.pushNamed(
-                        AppRoutes.listChatStudent,
-                        arguments: teacherId,
-                      );
-                    } else {
-                      GlobalSnackBar.showError(
-                        context,
-                        'Gagal memuat sesi guru. Silakan login ulang.',
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
-                  color: colorScheme.onSurface,
-                ),
-                Positioned(
-                  right: 9,
-                  top: 5,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '3',
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildChatIconWithBadge(context, colorScheme),
           IconButton(
             onPressed: () {},
             icon: Icon(Icons.delete, size: 30, color: colorScheme.error),
@@ -344,6 +290,104 @@ class ClassStudentListView extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildChatIconWithBadge(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    // Ambil teacherId
+    String? teacherId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (teacherId == null) {
+      final authVm = context.read<AuthTeacherViewmodel>();
+      teacherId = authVm.currentTeacher?.uid;
+    }
+
+    if (teacherId == null || teacherId.isEmpty) {
+      // Jika teacherId tidak ada, tampilkan icon tanpa badge
+      return Padding(
+        padding: EdgeInsets.only(right: AppSpacing.sm),
+        child: IconButton(
+          onPressed: () {
+            GlobalSnackBar.showError(
+              context,
+              'Gagal memuat sesi guru. Silakan login ulang.',
+            );
+          },
+          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
+          color: colorScheme.onSurface,
+        ),
+      );
+    }
+
+    final chatService = ChatService(
+      FirebaseFirestore.instance,
+      UploadImageService(),
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(right: AppSpacing.sm),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: chatService.getTeacherChatList(teacherId),
+        builder: (context, snapshot) {
+          int unreadCount = 0;
+
+          if (snapshot.hasData) {
+            final rooms = snapshot.data!.docs;
+            // Hitung jumlah chat yang belum dibaca
+            unreadCount = rooms.where((room) {
+              final data = room.data() as Map<String, dynamic>;
+              final isReadByTeacher = data['isReadByTeacher'] ?? true;
+              return !isReadByTeacher;
+            }).length;
+          }
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                onPressed: () {
+                  GlobalNavigator.pushNamed(
+                    AppRoutes.listChatStudent,
+                    arguments: teacherId,
+                  );
+                },
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
+                color: colorScheme.onSurface,
+              ),
+              // Tampilkan badge hanya jika ada pesan belum dibaca
+              if (unreadCount > 0)
+                Positioned(
+                  right: 9,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
