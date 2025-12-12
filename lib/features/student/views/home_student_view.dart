@@ -586,80 +586,109 @@ class _HomeStudentViewState extends State<HomeStudentView>
   Widget _startButton(BuildContext context, int currentLevel) {
     final bool isCurrentLevel = currentLevel == 1;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.elasticOut,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
+    // If animation not ready yet, return without bounce
+    if (_bounceAnimation == null) {
+      return _buildStartButtonContent(context, isCurrentLevel, 0);
+    }
 
-              // Pulsing start button with character
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 1, end: 1.1),
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.easeInOut,
-                builder: (context, pulseScale, child) {
-                  return Transform.scale(
-                    scale: pulseScale,
-                    child: GestureDetector(
-                      onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.playLevel1),
-                      child: SizedBox(
-                        width: 120,
-                        height: 120,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            // Level 1 Island Image
-                            Center(
-                              child: Image.asset('assets/img/games/level1.png'),
-                            ),
-
-                            // Character (if current level is 1)
-                            if (isCurrentLevel)
-                              Positioned(
-                                top: -5,
-                                child: TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0, end: 10),
-                                  duration: const Duration(milliseconds: 1500),
-                                  curve: Curves.easeInOut,
-                                  builder: (context, value, child) {
-                                    return Transform.translate(
-                                      offset: Offset(
-                                        0,
-                                        value > 5 ? 10 - value : value,
-                                      ),
-                                      child: Image.asset(
-                                        'assets/img/games/char.png',
-                                        height: 70,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    );
-                                  },
-                                  onEnd: () {
-                                    if (mounted) setState(() {});
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                onEnd: () {
-                  if (mounted) setState(() {});
-                },
-              ),
-            ],
-          ),
+    return AnimatedBuilder(
+      animation: _bounceAnimation!,
+      builder: (context, child) {
+        return _buildStartButtonContent(
+          context,
+          isCurrentLevel,
+          _bounceAnimation!.value,
         );
       },
+    );
+  }
+
+  Widget _buildStartButtonContent(
+    BuildContext context,
+    bool isCurrentLevel,
+    double bounceValue,
+  ) {
+    return Transform.translate(
+      offset: Offset(0, bounceValue * 1.3), // Bounce effect like other islands
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.elasticOut,
+        builder: (context, scale, child) {
+          return Transform.scale(
+            scale: scale,
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+
+                // Pulsing start button with character
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 1, end: 1.1),
+                  duration: const Duration(milliseconds: 1000),
+                  curve: Curves.easeInOut,
+                  builder: (context, pulseScale, child) {
+                    return Transform.scale(
+                      scale: pulseScale,
+                      child: GestureDetector(
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.playLevel1),
+                        child: SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            clipBehavior: Clip.none,
+                            children: [
+                              // Level 1 Island Image
+                              Center(
+                                child: Image.asset(
+                                  'assets/img/games/level1.png',
+                                ),
+                              ),
+
+                              // Character (if current level is 1)
+                              if (isCurrentLevel)
+                                Positioned(
+                                  top: -5,
+                                  child: TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 0, end: 10),
+                                    duration: const Duration(
+                                      milliseconds: 1500,
+                                    ),
+                                    curve: Curves.easeInOut,
+                                    builder: (context, value, child) {
+                                      return Transform.translate(
+                                        offset: Offset(
+                                          0,
+                                          value > 5 ? 10 - value : value,
+                                        ),
+                                        child: Image.asset(
+                                          'assets/img/games/char.png',
+                                          height: 70,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      );
+                                    },
+                                    onEnd: () {
+                                      if (mounted) setState(() {});
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  onEnd: () {
+                    if (mounted) setState(() {});
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
