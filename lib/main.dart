@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'core/error/error_notifier.dart';
 import 'core/routes/app_routes.dart';
 import 'core/routes/route_generator.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/global_navigator.dart';
 import 'core/utils/global_snackbar.dart';
@@ -33,6 +34,10 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize NotificationService
+  await NotificationService().initialize();
+
   final firebaseAuth = FirebaseAuth.instance;
   final firebaseFirestore = FirebaseFirestore.instance;
 
