@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ciloka_app/core/theme/app_spacing.dart';
+import 'package:ciloka_app/features/student/models/user_student_model.dart';
+import 'package:ciloka_app/features/student/services/student_service.dart';
 import 'package:ciloka_app/features/student/viewmodels/auth_student_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,156 +15,167 @@ class BookStudentView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              100,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF16C4FF), Color(0xFF3F83F8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+    return Consumer<AuthStudentViewmodel>(
+      builder: (context, vm, _) {
+        final uid = vm.authUid;
+
+        // Jika belum login / reload
+        if (uid == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Gunakan StreamBuilder agar data (Level & Poin) selalu real-time
+        return StreamBuilder<StudentModel?>(
+          stream: StudentService().streamStudentProfile(uid),
+          builder: (context, snapshot) {
+            // Kita bisa pakai data dari stream (terbaru) ATAU fallback ke data di VM (yg mungkin stale tapi ada)
+            // Prioritas: Snapshot Data -> VM Data -> Default
+            final streamData = snapshot.data;
+            final vmData = vm.studentProfile;
+
+            // Ambil data display dari Stream/VM
+            final String photoUrl =
+                streamData?.photoUrl ?? vmData?['photoUrl'] ?? '';
+            final String studentName =
+                streamData?.studentName ?? vmData?['studentName'] ?? 'Siswa';
+            final int currentLevel =
+                streamData?.currentLevel ?? vmData?['currentLevel'] ?? 1;
+            final int points =
+                streamData?.totalPoints ?? vmData?['points'] ?? 0;
+
+            return Scaffold(
+              body: SafeArea(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      100,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF16C4FF).withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Consumer<AuthStudentViewmodel>(
-                    builder: (context, vm, _) {
-                      // --- FIX: CEK DULU APAKAH DATA ADA ---
-                      final student = vm.studentProfile;
-
-                      if (student == null) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        );
-                      }
-
-                      // --- AMBIL DATA DENGAN FALLBACK (BIAR GAK NULL) ---
-                      final String photoUrl = student['photoUrl'] ?? '';
-                      final String studentName =
-                          student['studentName'] ?? 'Siswa';
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // FOTO PROFIL
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              shape: BoxShape.circle,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // --- HEADER CARD ---
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF16C4FF), Color(0xFF3F83F8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            child: CircleAvatar(
-                              radius: 38,
-                              backgroundColor: Colors.white,
-                              // Cek kalo URL kosong, tampilin icon user
-                              backgroundImage: photoUrl.isNotEmpty
-                                  ? CachedNetworkImageProvider(photoUrl)
-                                  : null,
-                              child: photoUrl.isEmpty
-                                  ? const Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: Colors.grey,
-                                    )
-                                  : null,
-                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF16C4FF,
+                                ).withValues(alpha: 0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // FOTO PROFIL
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.35),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: CircleAvatar(
+                                  radius: 38,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: photoUrl.isNotEmpty
+                                      ? CachedNetworkImageProvider(photoUrl)
+                                      : null,
+                                  child: photoUrl.isEmpty
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        )
+                                      : null,
+                                ),
+                              ),
+
+                              AppSpacing.hMd,
+
+                              // TEKS NAMA & KELAS
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Hallo!',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                    Text(
+                                      'Selamat Datang di kelas',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    Text(
+                                      studentName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        AppSpacing.vMd,
+
+                        // --- CHAT CALLOUT ---
+                        // Tetap pakai data dari VM karena ini data relasional (Teacher ID)
+                        // yang jarang berubah dan tidak ada di StudentModel sederhana
+                        if (vm.teacherId != null &&
+                            vm.getConsistentStudentId() != null)
+                          _ChatCallout(
+                            teacherId: vm.teacherId!,
+                            studentId: vm.getConsistentStudentId()!,
                           ),
 
-                          AppSpacing.hMd,
+                        AppSpacing.vMd,
 
-                          // TEKS NAMA & KELAS
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Hallo!',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                                Text(
-                                  'Selamat Datang di kelas',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.92,
-                                        ),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                                Text(
-                                  studentName,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                        // --- INFO GRID ---
+                        // Pass level & point yang REALTIME dari stream
+                        _InfoGrid(currentLevel: currentLevel, points: points),
+                      ],
+                    ),
                   ),
                 ),
-
-                AppSpacing.vMd,
-
-                Consumer<AuthStudentViewmodel>(
-                  builder: (context, vm, _) {
-                    // Pastikan ID sudah ready
-                    if (vm.teacherId == null) {
-                      return SizedBox(); // or loading
-                    }
-
-                    final teacherId = vm.teacherId!;
-                    final consistentStudentId = vm.getConsistentStudentId();
-
-                    // Jika consistent student ID belum ready, jangan tampilkan chat button
-                    if (consistentStudentId == null) {
-                      return SizedBox();
-                    }
-
-                    return _ChatCallout(
-                      teacherId: teacherId,
-                      studentId: consistentStudentId,
-                    );
-                  },
-                ),
-
-                AppSpacing.vMd,
-
-                // INFO GRID
-                const _InfoGrid(),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -234,7 +247,10 @@ class _ChatCallout extends StatelessWidget {
 }
 
 class _InfoGrid extends StatelessWidget {
-  const _InfoGrid();
+  final int currentLevel;
+  final int points;
+
+  const _InfoGrid({required this.currentLevel, required this.points});
 
   @override
   Widget build(BuildContext context) {
@@ -279,40 +295,23 @@ class _InfoGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Consumer<AuthStudentViewmodel>(
-                builder: (context, vm, _) {
-                  final student = vm.studentProfile;
-
-                  // Debug: Print student data
-                  debugPrint('📊 Student Profile Data: $student');
-                  debugPrint('📊 Current Level: ${student?['currentLevel']}');
-
-                  final currentLevel = student?['currentLevel'] ?? 1;
-
-                  return _InfoCard(
-                    title: 'Level $currentLevel',
-                    subtitle: 'dari 5 level',
-                    backgroundColor: const Color(0xff60C0F3),
-                    icon: Icons.rocket_launch_rounded,
-                  );
-                },
+              child: _InfoCard(
+                // Gunakan REALTIME data
+                title: 'Level $currentLevel',
+                subtitle: 'dari 5 level',
+                backgroundColor: const Color(0xff60C0F3),
+                icon: Icons.rocket_launch_rounded,
               ),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Consumer<AuthStudentViewmodel>(
-                builder: (context, vm, _) {
-                  final student = vm.studentProfile;
-                  final points = student?['points'] ?? 0;
-
-                  return _AnimatedInfoCard(
-                    value: points,
-                    subtitle: 'Total Poin',
-                    backgroundColor: const Color(0xffF8E2B0),
-                    icon: Icons.emoji_events_rounded,
-                    iconColor: Colors.amber,
-                  );
-                },
+              child: _AnimatedInfoCard(
+                // Gunakan REALTIME data
+                value: points,
+                subtitle: 'Total Poin',
+                backgroundColor: const Color(0xffF8E2B0),
+                icon: Icons.emoji_events_rounded,
+                iconColor: Colors.amber,
               ),
             ),
           ],
