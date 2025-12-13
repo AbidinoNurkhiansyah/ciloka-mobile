@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image_picker/image_picker.dart';
 
 class LearningReadView extends StatefulWidget {
   const LearningReadView({super.key});
@@ -14,305 +14,479 @@ class LearningReadView extends StatefulWidget {
 }
 
 class _LearningReadViewState extends State<LearningReadView> {
-  final ImagePicker _picker = ImagePicker();
+  // Camera State
+  CameraController? _cameraController;
+  Future<void>? _initializeControllerFuture;
+  bool _isCameraInitialized = false;
+
+  // ML & TTS State
   final TextRecognizer _textRecognizer = TextRecognizer();
   final FlutterTts _flutterTts = FlutterTts();
 
-  // Changed from File to XFile for cross-platform support
-  XFile? _selectedImage;
+  // Results State
+  XFile? _capturedImage;
   String _extractedText = "";
+  RecognizedText? _recognizedText; // Store full object for boxes
+  ui.Image? _imageDimensions;
   bool _isProcessing = false;
-  
-  // TTS State
+
+  // TTS Playback State
   bool _isPlaying = false;
   int _start = 0;
-  int _end = 0;
 
   @override
   void initState() {
     super.initState();
     _initTts();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        debugPrint("No cameras found");
+        return;
+      }
+      final firstCamera = cameras.first;
+      _cameraController = CameraController(
+        firstCamera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      _initializeControllerFuture = _cameraController!.initialize();
+      await _initializeControllerFuture;
+      if (mounted) setState(() => _isCameraInitialized = true);
+    } catch (e) {
+      debugPrint("Error initializing camera: $e");
+    }
   }
 
   void _initTts() async {
     await _flutterTts.setLanguage("id-ID");
-    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setSpeechRate(0.3);
     await _flutterTts.setVolume(1.0);
 
-    // On Web, some handlers might behave differently, but generally supported.
-    _flutterTts.setStartHandler(() {
-      setState(() {
-        _isPlaying = true;
-      });
+    _flutterTts.setProgressHandler((
+      String text,
+      int start,
+      int end,
+      String word,
+    ) {
+      if (mounted) {
+        setState(() {
+          _start = start;
+        });
+      }
     });
 
     _flutterTts.setCompletionHandler(() {
-      setState(() {
-        _isPlaying = false;
-        _start = 0;
-        _end = 0;
-      });
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _start = 0;
+        });
+      }
     });
 
-    _flutterTts.setProgressHandler((String text, int start, int end, String word) {
-      setState(() {
-        _start = start;
-        _end = end;
-      });
-    });
-    
     _flutterTts.setCancelHandler(() {
-      setState(() {
-        _isPlaying = false;
-        _start = 0;
-        _end = 0;
-      });
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _start = 0;
+        });
+      }
     });
   }
 
   @override
   void dispose() {
+    _cameraController?.dispose();
     _textRecognizer.close();
     _flutterTts.stop();
     super.dispose();
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? image = await _picker.pickImage(source: source);
-      if (image != null) {
-        setState(() {
-          _selectedImage = image; // Store XFile directly
-          _extractedText = "";
-          _start = 0;
-          _end = 0;
-        });
-        await _processImage();
-      }
-    } catch (e) {
-      debugPrint('Error picking image: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil gambar: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _processImage() async {
-    if (_selectedImage == null) return;
-
-    if (kIsWeb) {
-      setState(() {
-        _extractedText = "Maaf, fitur OCR (Scan Teks) belum didukung di versi Web.\n\nSilakan gunakan aplikasi Mobile untuk fitur ini.";
-      });
+  Future<void> _takePicture() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
       return;
-    }
-
-    setState(() {
-      _isProcessing = true;
-    });
+    if (_cameraController!.value.isTakingPicture) return;
 
     try {
-      // InputImage.fromFile requires dart:io File, which crashes on Web
-      // We guarded this with !kIsWeb above, so it's safe here on mobile.
-      final inputImage = InputImage.fromFile(File(_selectedImage!.path));
-      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
-
-      setState(() {
-        _extractedText = recognizedText.text;
-        if (_extractedText.isEmpty) {
-          _extractedText = "Tidak ditemukan teks dalam gambar.";
-        }
-      });
-    } catch (e) {
-      debugPrint('Error processing image: $e');
+      final image = await _cameraController!.takePicture();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memproses gambar: $e')),
-        );
+        setState(() {
+          _capturedImage = image;
+          _isProcessing = true;
+          _recognizedText = null;
+        });
       }
-    } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      await _processImage(image);
+    } catch (e) {
+      debugPrint("Error capturing image: $e");
     }
   }
 
-  Future<void> _speak() async {
-    if (_extractedText.isEmpty) return;
+  Future<void> _processImage(XFile image) async {
+    try {
+      // 1. Get Image Dimensions
+      final data = await image.readAsBytes();
+      final decodedImage = await decodeImageFromList(data);
+
+      // 2. Perform OCR
+      final inputImage = InputImage.fromFile(File(image.path));
+      final recognizedText = await _textRecognizer.processImage(inputImage);
+
+      if (mounted) {
+        setState(() {
+          _imageDimensions = decodedImage;
+          _recognizedText = recognizedText;
+          _extractedText = recognizedText.text;
+          _isProcessing = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error processing OCR: $e");
+      if (mounted) {
+        setState(() {
+          _extractedText = "Gagal memproses gambar: $e";
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _speakText(String text) async {
     if (_isPlaying) {
       await _flutterTts.stop();
+      if (mounted) setState(() => _isPlaying = false);
     } else {
-      await _flutterTts.speak(_extractedText);
+      if (mounted) setState(() => _isPlaying = true);
+      await _flutterTts.speak(text);
     }
   }
-  
-  // Helper to build rich text with highlighting
-  List<TextSpan> _buildHighlightedText() {
-    if (_extractedText.isEmpty) return [];
-    
-    List<TextSpan> spans = [];
-    String text = _extractedText;
-    
-    if (!_isPlaying || _end == 0) {
-      return [TextSpan(text: text)];
-    }
 
-    // Ensure indices are within bounds
-    int safeStart = _start.clamp(0, text.length);
-    int safeEnd = _end.clamp(0, text.length);
-    
-    if (safeStart > safeEnd) {
-      return [TextSpan(text: text)];
-    }
-
-    // Before highlight
-    if (safeStart > 0) {
-      spans.add(TextSpan(text: text.substring(0, safeStart)));
-    }
-    
-    // Highlighted part
-    spans.add(TextSpan(
-      text: text.substring(safeStart, safeEnd),
-      style: const TextStyle(
-        backgroundColor: Colors.yellow,
-        color: Colors.black,
-        fontWeight: FontWeight.bold,
-      ),
-    ));
-    
-    // After highlight
-    if (safeEnd < text.length) {
-      spans.add(TextSpan(text: text.substring(safeEnd)));
-    }
-    
-    return spans;
+  void _resetScan() {
+    if (_isPlaying) _flutterTts.stop();
+    setState(() {
+      _capturedImage = null;
+      _extractedText = "";
+      _recognizedText = null;
+      _imageDimensions = null;
+      _isProcessing = false;
+      _isPlaying = false;
+      _start = 0;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Belajar Membaca"),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Image Display
-            Container(
-              height: 250,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey),
-              ),
-              child: _selectedImage != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: kIsWeb 
-                        ? Image.network(
-                            _selectedImage!.path,
-                            fit: BoxFit.contain,
-                          )
-                        : Image.file(
-                            File(_selectedImage!.path),
-                            fit: BoxFit.contain,
-                          ),
-                    )
-                  : const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image, size: 50, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text("Belum ada gambar yang dipilih"),
-                        ],
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text("Kamera"),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text("Galeri"),
+    return Scaffold(body: _buildBody());
+  }
+
+  Widget _buildBody() {
+    if (_capturedImage != null) return _buildResultView();
+    if (_isCameraInitialized && _cameraController != null)
+      return _buildCameraPreview();
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildCameraPreview() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CameraPreview(_cameraController!),
+
+        // Helper Text
+        Positioned(
+          bottom: 150,
+          left: 0,
+          right: 0,
+          child: Text(
+            "Arahkan kamera ke teks",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              shadows: [
+                Shadow(
+                  blurRadius: 4,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  offset: const Offset(1, 1),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 24),
-            
-            // Text Display
-            if (_isProcessing)
-              const Center(child: CircularProgressIndicator())
-            else if (_extractedText.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
+          ),
+        ),
+
+        // Corner Brackets (Center Overlay)
+        Center(
+          child: CustomPaint(
+            size: const Size(250, 250),
+            painter: ScannerOverlayPainter(),
+          ),
+        ),
+
+        // Capture Button
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: GestureDetector(
+              onTap: _takePicture,
+              child: Container(
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 4),
+                  color: Colors.white.withValues(alpha: 0.2),
                 ),
-                child: Column(
-                  children: [
-                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Teks Terdeteksi:",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _speak,
-                          icon: Icon(
-                            _isPlaying ? Icons.stop_circle : Icons.volume_up,
-                            color: _isPlaying ? Colors.red : Colors.blue,
-                            size: 32,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    RichText(
-                      textAlign: TextAlign.justify,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 18,
-                          height: 1.5,
-                        ),
-                        children: _buildHighlightedText(),
-                      ),
-                    ),
-                  ],
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-          ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
+
+  Widget _buildResultView() {
+    if (_capturedImage == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            Expanded(
+              child: Container(
+                color: Colors.grey[200],
+                width: double.infinity,
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // 1. The Captured Image
+                      Image.file(
+                        File(_capturedImage!.path),
+                        fit: BoxFit.contain,
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                      ),
+
+                      // 2. Overlays (Only if NOT processing and we have results)
+                      if (!_isProcessing &&
+                          _recognizedText != null &&
+                          _imageDimensions != null)
+                        _buildOverlayWidgets(constraints),
+
+                      // 3. Loading Overlay (If Processing)
+                      if (_isProcessing)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(color: Colors.white),
+                                SizedBox(height: 16),
+                                Text(
+                                  "Sedang memproses teks...",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom Controls
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _resetScan,
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text("Scan Lagi"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _isProcessing
+                        ? null
+                        : () => _speakText(_extractedText),
+                    icon: Icon(_isPlaying ? Icons.stop : Icons.volume_up),
+                    label: Text(_isPlaying ? "Stop" : "Baca Semua"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOverlayWidgets(BoxConstraints constraints) {
+    if (_imageDimensions == null || _recognizedText == null) {
+      return const SizedBox.shrink();
+    }
+
+    double renderedWidth = constraints.maxWidth;
+    double renderedHeight = constraints.maxHeight;
+    final aspectRatio = _imageDimensions!.width / _imageDimensions!.height;
+
+    if (renderedWidth / renderedHeight > aspectRatio) {
+      renderedWidth = renderedHeight * aspectRatio;
+    } else {
+      renderedHeight = renderedWidth / aspectRatio;
+    }
+
+    final scaleX = renderedWidth / _imageDimensions!.width;
+    final scaleY = renderedHeight / _imageDimensions!.height;
+
+    return SizedBox(
+      width: renderedWidth,
+      height: renderedHeight,
+      child: Stack(children: _buildWordOverlays(scaleX, scaleY)),
+    );
+  }
+
+  List<Widget> _buildWordOverlays(double scaleX, double scaleY) {
+    List<Widget> overlayWidgets = [];
+    int currentTextSearchIndex = 0;
+
+    for (var block in _recognizedText!.blocks) {
+      for (var line in block.lines) {
+        for (var element in line.elements) {
+          final rect = element.boundingBox;
+          final text = element.text;
+
+          int indexInFullText = _extractedText.indexOf(
+            text,
+            currentTextSearchIndex,
+          );
+
+          bool isHighlighted = false;
+          if (indexInFullText != -1) {
+            if (_isPlaying &&
+                _start >= indexInFullText &&
+                _start < (indexInFullText + text.length)) {
+              isHighlighted = true;
+            }
+            currentTextSearchIndex = indexInFullText + text.length;
+          }
+
+          overlayWidgets.add(
+            Positioned(
+              left: rect.left * scaleX,
+              top: rect.top * scaleY,
+              width: rect.width * scaleX,
+              height: rect.height * scaleY,
+              child: GestureDetector(
+                onTap: () => _speakText(text),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isHighlighted
+                        ? Colors.blue[300]?.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+    return overlayWidgets;
+  }
+}
+
+class ScannerOverlayPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+
+    final double cornerSize = 24.0;
+
+    // Top Left
+    canvas.drawLine(const Offset(0, 0), Offset(0, cornerSize), paint);
+    canvas.drawLine(const Offset(0, 0), Offset(cornerSize, 0), paint);
+
+    // Top Right
+    canvas.drawLine(
+      Offset(size.width, 0),
+      Offset(size.width, cornerSize),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width, 0),
+      Offset(size.width - cornerSize, 0),
+      paint,
+    );
+
+    // Bottom Left
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(0, size.height - cornerSize),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(cornerSize, size.height),
+      paint,
+    );
+
+    // Bottom Right
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width, size.height - cornerSize),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width - cornerSize, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
