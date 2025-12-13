@@ -95,6 +95,14 @@ class _MainStudentViewState extends State<MainStudentView> {
                 BottomNavigationBarItem(
                   icon: Opacity(
                     opacity: vm.currentIndex == 2 ? 1.0 : 0.6,
+                    child: const Icon(Icons.camera_alt, size: 24),
+                  ),
+                  activeIcon: const Icon(Icons.camera_alt, size: 28),
+                  label: "Belajar Membaca",
+                ),
+                BottomNavigationBarItem(
+                  icon: Opacity(
+                    opacity: vm.currentIndex == 3 ? 1.0 : 0.6,
                     child: Image.asset(
                       'assets/img/icon_peringkat.png',
                       width: 24,
@@ -116,7 +124,7 @@ class _MainStudentViewState extends State<MainStudentView> {
                 ),
                 BottomNavigationBarItem(
                   icon: Opacity(
-                    opacity: vm.currentIndex == 3 ? 1.0 : 0.6,
+                    opacity: vm.currentIndex == 4 ? 1.0 : 0.6,
                     child: Image.asset(
                       'assets/img/icon_akun.png',
                       width: 24,
