@@ -5,6 +5,7 @@ import '../views/book_student_view.dart';
 import '../views/home_student_view.dart';
 import '../views/leaderboard_student_view.dart';
 import '../views/profile_student_view.dart';
+import '../views/learning_read_view.dart';
 
 class NavigationStudentViewModel extends ChangeNotifier {
   int _indexBottomNavbar = 0;
@@ -21,6 +22,7 @@ class NavigationStudentViewModel extends ChangeNotifier {
   final List<Widget> _screens = [ 
      HomeStudentView(),
     const BookStudentView(),
+    const LearningReadView(),
     const LeaderboardStudentView(),
     const ProfileStudentView(),
   ];
