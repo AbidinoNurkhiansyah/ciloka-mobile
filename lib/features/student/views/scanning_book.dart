@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-class LearningReadView extends StatefulWidget {
-  const LearningReadView({super.key});
+class ScanningBook extends StatefulWidget {
+  const ScanningBook({super.key});
 
   @override
-  State<LearningReadView> createState() => _LearningReadViewState();
+  State<ScanningBook> createState() => _ScanningBookState();
 }
 
-class _LearningReadViewState extends State<LearningReadView> {
+class _ScanningBookState extends State<ScanningBook> {
   // Camera State
   CameraController? _cameraController;
   Future<void>? _initializeControllerFuture;
@@ -33,6 +33,8 @@ class _LearningReadViewState extends State<LearningReadView> {
   // TTS Playback State
   bool _isPlaying = false;
   int _start = 0;
+  TextElement? _activeElement;
+  bool _isReadingFullText = false;
 
   @override
   void initState() {
@@ -156,14 +158,37 @@ class _LearningReadViewState extends State<LearningReadView> {
     }
   }
 
-  Future<void> _speakText(String text) async {
+  Future<void> _speakText({
+    String? text,
+    TextElement? element,
+    bool isFullText = false,
+  }) async {
+    // If stopping
     if (_isPlaying) {
       await _flutterTts.stop();
-      if (mounted) setState(() => _isPlaying = false);
-    } else {
-      if (mounted) setState(() => _isPlaying = true);
-      await _flutterTts.speak(text);
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _activeElement = null;
+          _isReadingFullText = false;
+        });
+      }
+      return;
     }
+
+    // If starting
+    String textToSpeak = text ?? element?.text ?? "";
+    if (textToSpeak.isEmpty) return;
+
+    if (mounted) {
+      setState(() {
+        _isPlaying = true;
+        _isReadingFullText = isFullText;
+        _activeElement = element;
+      });
+    }
+
+    await _flutterTts.speak(textToSpeak);
   }
 
   void _resetScan() {
@@ -176,6 +201,8 @@ class _LearningReadViewState extends State<LearningReadView> {
       _isProcessing = false;
       _isPlaying = false;
       _start = 0;
+      _activeElement = null;
+      _isReadingFullText = false;
     });
   }
 
@@ -339,7 +366,10 @@ class _LearningReadViewState extends State<LearningReadView> {
                   ElevatedButton.icon(
                     onPressed: _isProcessing
                         ? null
-                        : () => _speakText(_extractedText),
+                        : () => _speakText(
+                            text: _extractedText,
+                            isFullText: true,
+                          ),
                     icon: Icon(_isPlaying ? Icons.stop : Icons.volume_up),
                     label: Text(_isPlaying ? "Stop" : "Baca Semua"),
                     style: ElevatedButton.styleFrom(
@@ -395,19 +425,27 @@ class _LearningReadViewState extends State<LearningReadView> {
           final rect = element.boundingBox;
           final text = element.text;
 
-          int indexInFullText = _extractedText.indexOf(
-            text,
-            currentTextSearchIndex,
-          );
-
           bool isHighlighted = false;
-          if (indexInFullText != -1) {
-            if (_isPlaying &&
-                _start >= indexInFullText &&
-                _start < (indexInFullText + text.length)) {
+
+          if (_isReadingFullText) {
+            // Logic for Full Text Reading (Sequential Highlighting)
+            int indexInFullText = _extractedText.indexOf(
+              text,
+              currentTextSearchIndex,
+            );
+            if (indexInFullText != -1) {
+              if (_isPlaying &&
+                  _start >= indexInFullText &&
+                  _start < (indexInFullText + text.length)) {
+                isHighlighted = true;
+              }
+              currentTextSearchIndex = indexInFullText + text.length;
+            }
+          } else {
+            // Logic for Single Word Reading (Direct Element Match)
+            if (_isPlaying && _activeElement == element) {
               isHighlighted = true;
             }
-            currentTextSearchIndex = indexInFullText + text.length;
           }
 
           overlayWidgets.add(
@@ -417,7 +455,7 @@ class _LearningReadViewState extends State<LearningReadView> {
               width: rect.width * scaleX,
               height: rect.height * scaleY,
               child: GestureDetector(
-                onTap: () => _speakText(text),
+                onTap: () => _speakText(element: element),
                 child: Container(
                   decoration: BoxDecoration(
                     color: isHighlighted

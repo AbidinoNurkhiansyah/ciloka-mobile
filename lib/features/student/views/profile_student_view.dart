@@ -154,7 +154,7 @@ class ProfileStudentView extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Level ${student.totalPoints}',
+                                  '${student.totalPoints}PTS',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
