@@ -230,7 +230,7 @@ class _ScanningBookState extends State<ScanningBook> {
           left: 0,
           right: 0,
           child: Text(
-            "Arahkan kamera ke teks",
+            "Arahkan kamera ke Bukumu",
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,

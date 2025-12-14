@@ -647,7 +647,7 @@ class _PodiumItemState extends State<_PodiumItem>
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
+                fontWeight: isMe ? FontWeight.w800 : FontWeight.w600,
                 fontSize: widget.isFirst ? 15 : 13,
                 shadows: [
                   BoxShadow(
