@@ -7,7 +7,6 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/static/firebase_auth_status.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/global_navigator.dart';
-import '../../../widgets/custom_method_auth_widget.dart';
 import '../../../widgets/custom_textfield_widget.dart';
 import '../../../widgets/gradient_stroke_text_widget.dart';
 import '../viewmodels/auth_teacher_viewmodel.dart';
@@ -158,24 +157,7 @@ class _RegisterTeacherViewState extends State<RegisterTeacherView> {
                             validator: validatePassword,
                           ),
 
-                          Container(
-                            alignment: Alignment.centerRight,
-                            padding: EdgeInsets.only(
-                              left: AppSpacing.md,
-                              bottom: AppSpacing.md,
-                            ),
-                            child: Text(
-                              'Lupa Kata Sandi?',
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                          ),
-
+                          SizedBox(height: AppSpacing.md),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -201,7 +183,84 @@ class _RegisterTeacherViewState extends State<RegisterTeacherView> {
                               ),
                             ),
                           ),
+                          AppSpacing.vSm,
 
+                          Padding(
+                            padding: EdgeInsetsGeometry.symmetric(
+                              vertical: AppSpacing.md,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.md,
+                                  ),
+                                  child: Text(
+                                    'atau masuk dengan',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          AppSpacing.vSm,
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface,
+                              ),
+                              onPressed: () {
+                                // if (_formKey.currentState!.validate()) {
+                                //   _tapToLogin();
+                                // }
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.google,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                  ),
+                                  AppSpacing.hSm,
+                                  Text(
+                                    "Google",
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           Container(
                             margin: EdgeInsets.all(AppSpacing.md),
                             child: Text.rich(
@@ -239,24 +298,6 @@ class _RegisterTeacherViewState extends State<RegisterTeacherView> {
                                 ],
                               ),
                             ),
-                          ),
-                          AppSpacing.vSm,
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              CustomMethodAuthWidget(
-                                icon: FontAwesomeIcons.google,
-                              ),
-
-                              AppSpacing.hLg,
-                              CustomMethodAuthWidget(
-                                icon: FontAwesomeIcons.facebook,
-                              ),
-                              AppSpacing.hLg,
-                              CustomMethodAuthWidget(
-                                icon: FontAwesomeIcons.apple,
-                              ),
-                            ],
                           ),
                         ],
                       ),
