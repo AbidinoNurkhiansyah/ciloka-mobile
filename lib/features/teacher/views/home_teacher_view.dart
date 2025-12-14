@@ -149,18 +149,6 @@ class HomeTeacherView extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: SizedBox(
-          height: 74,
-          width: 74,
-          child: FloatingActionButton(
-            onPressed: () {},
-            backgroundColor: colorScheme.secondary,
-            child: Icon(Icons.add, color: colorScheme.onSurface, size: 36),
-          ),
-        ),
-      ),
     );
   }
 
@@ -179,7 +167,7 @@ class HomeTeacherView extends StatelessWidget {
     if (teacherId == null || teacherId.isEmpty) {
       // Jika teacherId tidak ada, tampilkan icon tanpa badge
       return Padding(
-        padding: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.only(right: 16),
         child: IconButton(
           onPressed: () {
             GlobalSnackBar.showError(
@@ -199,7 +187,7 @@ class HomeTeacherView extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 16),
       child: StreamBuilder<QuerySnapshot>(
         stream: chatService.getTeacherChatList(teacherId),
         builder: (context, snapshot) {
@@ -225,7 +213,7 @@ class HomeTeacherView extends StatelessWidget {
                     arguments: teacherId,
                   );
                 },
-                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 28),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 32),
                 color: Colors.white,
               ),
               // Tampilkan badge hanya jika ada pesan belum dibaca
