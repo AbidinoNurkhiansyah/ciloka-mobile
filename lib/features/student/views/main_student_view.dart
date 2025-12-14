@@ -95,10 +95,24 @@ class _MainStudentViewState extends State<MainStudentView> {
                 BottomNavigationBarItem(
                   icon: Opacity(
                     opacity: vm.currentIndex == 2 ? 1.0 : 0.6,
-                    child: const Icon(Icons.camera_alt, size: 24),
+                    child: Image.asset(
+                      'assets/img/scan.png',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.emoji_events, size: 24);
+                      },
+                    ),
                   ),
-                  activeIcon: const Icon(Icons.camera_alt, size: 28),
-                  label: "Belajar Membaca",
+                  activeIcon: Image.asset(
+                    'assets/img/scan.png',
+                    width: 28,
+                    height: 28,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.emoji_events, size: 28);
+                    },
+                  ),
+                  label: "Ayo Baca",
                 ),
                 BottomNavigationBarItem(
                   icon: Opacity(

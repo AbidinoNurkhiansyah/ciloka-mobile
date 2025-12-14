@@ -148,13 +148,13 @@ class ProfileStudentView extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.star_rounded,
+                                  Icons.bolt,
                                   color: Colors.amber,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Level ${student.currentLevel}',
+                                  'Level ${student.totalPoints}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
