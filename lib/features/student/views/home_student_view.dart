@@ -324,7 +324,7 @@ class _HomeStudentViewState extends State<HomeStudentView>
     });
 
     final positions = [135, 350, 500, 705, 850];
-    final double autoHeight = positions.reduce((a, b) => a > b ? a : b) + 160;
+    final double autoHeight = positions.reduce((a, b) => a > b ? a : b) + 200;
 
     return SingleChildScrollView(
       controller: _mapScrollController,
@@ -634,16 +634,49 @@ class _HomeStudentViewState extends State<HomeStudentView>
                             Navigator.pushNamed(context, AppRoutes.playLevel1),
                         child: SizedBox(
                           width: 120,
-                          height: 120,
+
+                          // Removed fixed height to prevent overflow
                           child: Stack(
                             alignment: Alignment.center,
                             clipBehavior: Clip.none,
                             children: [
                               // Level 1 Island Image
-                              Center(
-                                child: Image.asset(
-                                  'assets/img/games/level1.png',
-                                ),
+                              Column(
+                                children: [
+                                  Center(
+                                    child: Image.asset(
+                                      'assets/img/games/level1.png',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      "Level 1",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
 
                               // Character (if current level is 1)

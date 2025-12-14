@@ -112,7 +112,7 @@ class _MainStudentViewState extends State<MainStudentView> {
                       return const Icon(Icons.emoji_events, size: 28);
                     },
                   ),
-                  label: "Ayo Baca",
+                  label: "Scan Baca",
                 ),
                 BottomNavigationBarItem(
                   icon: Opacity(
