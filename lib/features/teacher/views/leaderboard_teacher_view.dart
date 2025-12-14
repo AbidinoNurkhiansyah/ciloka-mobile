@@ -151,11 +151,8 @@ class _LeaderboardContentState extends State<_LeaderboardContent> {
                     if (entries.isEmpty)
                       Expanded(
                         child: Center(
-                          child: Text(
-                            "Belum ada data",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       )

@@ -27,15 +27,10 @@ class MainTeacherView extends StatelessWidget {
               ),
               label: "Beranda",
             ),
+
             BottomNavigationBarItem(
               icon: Icon(
-                vm.currentIndex == 1 ? Icons.class_ : Icons.class_outlined,
-              ),
-              label: "Kelas",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                vm.currentIndex == 2
+                vm.currentIndex == 1
                     ? Icons.leaderboard
                     : Icons.leaderboard_outlined,
               ),
@@ -43,7 +38,7 @@ class MainTeacherView extends StatelessWidget {
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                vm.currentIndex == 3 ? Icons.person : Icons.person_outlined,
+                vm.currentIndex == 2 ? Icons.person : Icons.person_outlined,
               ),
               label: "Akun",
             ),

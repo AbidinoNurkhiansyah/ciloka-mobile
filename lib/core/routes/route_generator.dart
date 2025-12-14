@@ -13,7 +13,7 @@ import '../../features/student/views/main_student_view.dart';
 import '../../features/teacher/views/add_student_teacher_screen.dart';
 
 import '../../features/teacher/views/class_student_list_view.dart';
-import '../../features/teacher/views/class_teacher_view.dart';
+
 import '../../features/teacher/views/login_teacher_view.dart';
 import '../../features/teacher/views/main_teacher_view.dart';
 import '../../features/teacher/views/register_teacher_view.dart';
@@ -53,8 +53,7 @@ class RouteGenerator {
           builder: (_) => const ClassStudentListView(),
           settings: settings,
         );
-      case AppRoutes.classTeacher:
-        return MaterialPageRoute(builder: (_) => const ClassTeacherView());
+
       case AppRoutes.addStudentTeacher:
         return MaterialPageRoute(
           builder: (_) => const AddStudentTeacherScreen(),

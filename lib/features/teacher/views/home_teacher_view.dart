@@ -1,5 +1,6 @@
 import '../../../core/routes/app_routes.dart';
-import '../../../core/services/notification_service.dart';
+
+import '../../../core/static/class_color_static.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/global_navigator.dart';
 import '../../../core/utils/global_snackbar.dart';
@@ -12,6 +13,7 @@ import 'package:provider/provider.dart';
 import '../models/user_teacher_model.dart';
 import '../services/profile_teacher_service.dart';
 import '../viewmodels/auth_teacher_viewmodel.dart';
+import '../viewmodels/class_viewmodel.dart';
 
 class HomeTeacherView extends StatelessWidget {
   const HomeTeacherView({super.key});
@@ -25,6 +27,7 @@ class HomeTeacherView extends StatelessWidget {
     }
 
     final teacherStream = ProfileTeacherService().streamTeacherProfile(uid);
+    final viewModel = context.read<ClassViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
@@ -50,101 +53,128 @@ class HomeTeacherView extends StatelessWidget {
           }
           final teacher = snapshot.data!;
           return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundImage: (teacher.photoUrl.isNotEmpty)
-                            ? NetworkImage(teacher.photoUrl)
-                            : null,
-                        child: teacher.photoUrl.isEmpty
-                            ? const Icon(Icons.person, size: 36)
-                            : null,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(
-                            'Dashboard Guru',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Halo, ${teacher.username}',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: AppSpacing.md,
-                    top: AppSpacing.md,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Kelas Hari Ini',
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w800,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 36,
+                          backgroundImage: (teacher.photoUrl.isNotEmpty)
+                              ? NetworkImage(teacher.photoUrl)
+                              : null,
+                          child: teacher.photoUrl.isEmpty
+                              ? const Icon(Icons.person, size: 36)
+                              : null,
                         ),
-                      ),
-                      // Test Notification Button
-                      Padding(
-                        padding: const EdgeInsets.only(right: AppSpacing.md),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // Test text notification
-                            NotificationService().showChatNotification(
-                              senderName: 'Budi Santoso',
-                              message:
-                                  'Halo Bu Guru, saya mau tanya PR matematika!',
-                              isImage: false,
-                            );
+                        const SizedBox(width: AppSpacing.md),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Text(
+                              'Dashboard Guru',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Halo, ${teacher.username}',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onPrimary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
 
-                            // Test image notification (delayed)
-                            Future.delayed(const Duration(seconds: 2), () {
-                              NotificationService().showChatImageNotification(
-                                senderName: 'Siti Aisyah',
-                                imageUrl: 'https://via.placeholder.com/300',
-                              );
-                            });
-                          },
-                          icon: const Icon(
-                            Icons.notifications_active,
-                            size: 16,
-                          ),
-                          label: const Text('Test Notif'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.secondary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                  _buildClassSummary(context),
+                  const SizedBox(height: 8),
+                  StreamBuilder(
+                    stream: viewModel.classStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                        );
+                      }
+                      final classes = snapshot.data ?? [];
+                      if (classes.isEmpty) {
+                        return SizedBox(
+                          height:
+                              MediaQuery.of(context).size.height *
+                              0.6, // biar tetap di tengah layar
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.class_rounded,
+                                  size: 120,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                AppSpacing.vSm,
+                                Text(
+                                  'Belum ada kelas!',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                AppSpacing.vSm,
+                                Text(
+                                  'Tambah Kelas terlebih dahulu',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ),
-                    ],
+                        );
+                      }
+                      return Column(
+                        children: List.generate(classes.length, (index) {
+                          final kelas = classes[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: _buildClassCard(
+                              context,
+                              grade: kelas.grade,
+                              className: kelas.className,
+                              onTap: () {
+                                GlobalNavigator.pushNamed(
+                                  AppRoutes.classDataTeacher,
+                                  arguments: {
+                                    'classId': kelas.id,
+                                    'grade': kelas.grade,
+                                    'className': kelas.className,
+                                  },
+                                );
+                              },
+                            ),
+                          );
+                        }),
+                      );
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -247,6 +277,204 @@ class HomeTeacherView extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildClassSummary(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Ringkasan Kelas',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.add, size: 16, color: Colors.white),
+          label: const Text(
+            'Buat Kelas',
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) => _addClassDialog(dialogContext),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.secondary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget untuk Card "Kelas 4 A"
+  Widget _buildClassCard(
+    BuildContext context, {
+    required String grade,
+    required String className,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        decoration: BoxDecoration(
+          color: ClassColorHelper.getUniqueColor(),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.onSurface,
+            width: 3,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              'Kelas $grade $className',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _addClassDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final classNameController = TextEditingController();
+    String? selectedGrade;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Consumer<ClassViewModel>(
+      builder: (context, viewModel, _) => AlertDialog(
+        title: Align(
+          alignment: AlignmentGeometry.center,
+          child: Text(
+            'Tambah Kelas',
+            style: textTheme.titleSmall?.copyWith(
+              color: colorScheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        backgroundColor: colorScheme.onSurface,
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Pilih Tingkat',
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colorScheme.onSurfaceVariant,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colorScheme.secondary,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                dropdownColor: colorScheme.onSurface,
+
+                style: TextStyle(color: Color(0xff1e1e1e)),
+                items: List.generate(
+                  6,
+                  (index) => DropdownMenuItem(
+                    value: '${index + 1}',
+                    child: Text('Kelas ${index + 1}'),
+                  ),
+                ),
+                onChanged: (value) => selectedGrade = value,
+                validator: (value) =>
+                    value == null ? 'Silakan pilih tingkat' : null,
+              ),
+              AppSpacing.vSm,
+              TextFormField(
+                controller: classNameController,
+                style: TextStyle(color: colorScheme.onPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Nama Kelas',
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colorScheme.onSurfaceVariant,
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colorScheme.secondary,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Nama kelas wajib diisi'
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Batal',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: viewModel.isLoading
+                ? null
+                : () {
+                    if (formKey.currentState!.validate()) {
+                      viewModel.addClass(
+                        className: classNameController.text,
+                        grade: selectedGrade!,
+                        context: context,
+                      );
+                    }
+                  },
+            child: viewModel.isLoading
+                ? const CircularProgressIndicator()
+                : Text(
+                    'Tambah',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.secondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
