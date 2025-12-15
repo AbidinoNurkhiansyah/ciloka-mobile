@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +30,7 @@ class _ScanningBookState extends State<ScanningBook>
   String _extractedText = "";
   RecognizedText? _recognizedText; // Store full object for boxes
   Size? _imageDimensions;
+  Map<TextElement, TextRange> _elementRanges = {};
   bool _isProcessing = false;
 
   // TTS Playback State
@@ -177,19 +178,35 @@ class _ScanningBookState extends State<ScanningBook>
 
   Future<void> _processImage(XFile image) async {
     try {
-      // 1. Get Image Dimensions using standard Flutter Image pipeline
-      // This is safer than raw Isolate.run with dart:ui which can crash on some devices
+      // 1. Get Image Dimensions
       final imageSize = await _getImageSize(File(image.path));
 
       // 2. Perform OCR
       final inputImage = InputImage.fromFile(File(image.path));
       final recognizedText = await _textRecognizer.processImage(inputImage);
 
+      // 3. Build text & map ranges manually for accurate TTS sync
+      StringBuffer buffer = StringBuffer();
+      Map<TextElement, TextRange> ranges = {};
+
+      for (var block in recognizedText.blocks) {
+        for (var line in block.lines) {
+          for (var element in line.elements) {
+            int start = buffer.length;
+            buffer.write(element.text);
+            int end = buffer.length;
+            ranges[element] = TextRange(start: start, end: end);
+            buffer.write(" "); // Add space safe for TTS
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _imageDimensions = imageSize;
           _recognizedText = recognizedText;
-          _extractedText = recognizedText.text;
+          _extractedText = buffer.toString().trim();
+          _elementRanges = ranges;
           _isProcessing = false;
         });
       }
@@ -229,6 +246,7 @@ class _ScanningBookState extends State<ScanningBook>
     if (mounted) {
       setState(() {
         _isPlaying = true;
+        _isReadingFullText = isFullText;
         _activeElement = element;
       });
     }
@@ -236,15 +254,31 @@ class _ScanningBookState extends State<ScanningBook>
     await _flutterTts.speak(textToSpeak);
   }
 
-  Future<Size> _getImageSize(File file) async {
-    final data = await file.readAsBytes();
-    final codec = await ui.instantiateImageCodec(data);
-    final frame = await codec.getNextFrame();
-    final image = frame.image;
-    final size = Size(image.width.toDouble(), image.height.toDouble());
-    image.dispose();
-    codec.dispose();
-    return size;
+  Future<Size> _getImageSize(File file) {
+    final Completer<Size> completer = Completer();
+    final img = Image.file(file);
+    img.image
+        .resolve(const ImageConfiguration())
+        .addListener(
+          ImageStreamListener(
+            (ImageInfo info, bool _) {
+              if (!completer.isCompleted) {
+                completer.complete(
+                  Size(
+                    info.image.width.toDouble(),
+                    info.image.height.toDouble(),
+                  ),
+                );
+              }
+            },
+            onError: (exception, stackTrace) {
+              if (!completer.isCompleted) {
+                completer.completeError(exception, stackTrace);
+              }
+            },
+          ),
+        );
+    return completer.future;
   }
 
   void _resetScan() {
@@ -473,29 +507,22 @@ class _ScanningBookState extends State<ScanningBook>
 
   List<Widget> _buildWordOverlays(double scaleX, double scaleY) {
     List<Widget> overlayWidgets = [];
-    int currentTextSearchIndex = 0;
 
     for (var block in _recognizedText!.blocks) {
       for (var line in block.lines) {
         for (var element in line.elements) {
           final rect = element.boundingBox;
-          final text = element.text;
 
           bool isHighlighted = false;
 
           if (_isReadingFullText) {
-            // Logic for Full Text Reading (Sequential Highlighting)
-            int indexInFullText = _extractedText.indexOf(
-              text,
-              currentTextSearchIndex,
-            );
-            if (indexInFullText != -1) {
-              if (_isPlaying &&
-                  _start >= indexInFullText &&
-                  _start < (indexInFullText + text.length)) {
-                isHighlighted = true;
-              }
-              currentTextSearchIndex = indexInFullText + text.length;
+            // Precise range check using pre-calculated map
+            final range = _elementRanges[element];
+            if (range != null &&
+                _isPlaying &&
+                _start >= range.start &&
+                _start < range.end) {
+              isHighlighted = true;
             }
           } else {
             // Logic for Single Word Reading (Direct Element Match)
