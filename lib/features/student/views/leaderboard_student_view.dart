@@ -313,7 +313,7 @@ class _LeaderboardContent extends StatelessWidget {
         color: isMe ? Color(0xFFF0F4FF) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: isMe
-            ? Border.all(color: Color(0xFF4A00E0), width: 1.5)
+            ? Border.all(color: Color(0xFF0090D4), width: 1.5)
             : Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
