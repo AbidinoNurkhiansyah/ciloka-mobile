@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/routes/app_routes.dart';
 import 'teacher/viewmodels/auth_teacher_viewmodel.dart';
 import 'student/viewmodels/auth_student_viewmodel.dart';
+import 'parent/viewmodels/auth_parent_viewmodel.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -75,6 +76,13 @@ class _SplashScreenState extends State<SplashScreen>
           final authStudentVm = context.read<AuthStudentViewmodel>();
           await authStudentVm.loadStudentProfile(); // Reload data student
           Navigator.pushReplacementNamed(context, AppRoutes.mainStudent);
+        }
+      } else if (userRole == 'parent') {
+        // Load session parent
+        if (mounted) {
+          final authParentVm = context.read<AuthParentViewmodel>();
+          await authParentVm.loadParentSession();
+          Navigator.pushReplacementNamed(context, AppRoutes.mainParent);
         }
       } else {
         // Fallback jika user ada tapi role tidak jelas (biasanya student lama)

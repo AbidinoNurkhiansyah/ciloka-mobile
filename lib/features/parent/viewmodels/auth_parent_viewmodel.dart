@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/auth_parent_service.dart';
 
@@ -25,6 +26,29 @@ class AuthParentViewmodel extends ChangeNotifier {
 
   FirebaseAuthStatus _status = FirebaseAuthStatus.unauthenticated;
   FirebaseAuthStatus get status => _status;
+
+  Future<void> loadParentSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nis = prefs.getString('logged_nis');
+
+    if (nis == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final data = await _parentService.fetchByNis(nis);
+      if (data != null) {
+        _currentParentData = data;
+        _status = FirebaseAuthStatus.authenticated;
+      }
+    } catch (e) {
+      debugPrint("Error loading parent session: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> loginParent(
     String parentName,
@@ -64,6 +88,12 @@ class AuthParentViewmodel extends ChangeNotifier {
               'Berhasil Masuk, Selamat Datang👋',
             );
 
+            // Save Session
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('user_role', 'parent');
+            await prefs.setString('logged_nis', nis);
+            await prefs.setString('logged_parent_name', parentName);
+
             await Future.delayed(const Duration(milliseconds: 400));
             GlobalNavigator.pushReplacementNamed(AppRoutes.mainParent);
           }
@@ -96,8 +126,16 @@ class AuthParentViewmodel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_role');
+      await prefs.remove('logged_nis');
+      await prefs.remove('logged_parent_name');
+
       _currentParentData = null;
       _status = FirebaseAuthStatus.unauthenticated;
+      GlobalNavigator.pushReplacementNamed(
+        AppRoutes.loginParent,
+      ); // Assuming route exists or fallback
     } catch (e, stack) {
       GlobalErrorHandler.handle(context, e, stack);
     } finally {
