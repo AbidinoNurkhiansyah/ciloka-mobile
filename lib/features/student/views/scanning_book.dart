@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class ScanningBook extends StatefulWidget {
   const ScanningBook({super.key});
@@ -27,7 +28,7 @@ class _ScanningBookState extends State<ScanningBook> {
   XFile? _capturedImage;
   String _extractedText = "";
   RecognizedText? _recognizedText; // Store full object for boxes
-  ui.Image? _imageDimensions;
+  Size? _imageDimensions;
   bool _isProcessing = false;
 
   // TTS Playback State
@@ -53,7 +54,7 @@ class _ScanningBookState extends State<ScanningBook> {
       final firstCamera = cameras.first;
       _cameraController = CameraController(
         firstCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium, // Changed to medium for better stability
         enableAudio: false,
       );
       _initializeControllerFuture = _cameraController!.initialize();
@@ -116,14 +117,37 @@ class _ScanningBookState extends State<ScanningBook> {
 
     try {
       final image = await _cameraController!.takePicture();
-      if (mounted) {
-        setState(() {
-          _capturedImage = image;
-          _isProcessing = true;
-          _recognizedText = null;
-        });
+      // Crop the image
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: image.path,
+        maxWidth: 1080, // Cap resolution to prevent OOM
+        maxHeight: 1080,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Potong Gambar',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(title: 'Potong Gambar'),
+        ],
+      );
+
+      if (croppedFile != null) {
+        final processedImage = XFile(croppedFile.path);
+        if (mounted) {
+          setState(() {
+            _capturedImage = processedImage;
+            _isProcessing = true;
+            _recognizedText = null;
+          });
+        }
+        await _processImage(processedImage);
+      } else {
+        // User cancelled cropping, do nothing or re-enable camera
+        // For now preventing stuck loading state if any
       }
-      await _processImage(image);
     } catch (e) {
       debugPrint("Error capturing image: $e");
     }
@@ -131,9 +155,9 @@ class _ScanningBookState extends State<ScanningBook> {
 
   Future<void> _processImage(XFile image) async {
     try {
-      // 1. Get Image Dimensions
-      final data = await image.readAsBytes();
-      final decodedImage = await decodeImageFromList(data);
+      // 1. Get Image Dimensions using standard Flutter Image pipeline
+      // This is safer than raw Isolate.run with dart:ui which can crash on some devices
+      final imageSize = await _getImageSize(File(image.path));
 
       // 2. Perform OCR
       final inputImage = InputImage.fromFile(File(image.path));
@@ -141,7 +165,7 @@ class _ScanningBookState extends State<ScanningBook> {
 
       if (mounted) {
         setState(() {
-          _imageDimensions = decodedImage;
+          _imageDimensions = imageSize;
           _recognizedText = recognizedText;
           _extractedText = recognizedText.text;
           _isProcessing = false;
@@ -183,12 +207,22 @@ class _ScanningBookState extends State<ScanningBook> {
     if (mounted) {
       setState(() {
         _isPlaying = true;
-        _isReadingFullText = isFullText;
         _activeElement = element;
       });
     }
 
     await _flutterTts.speak(textToSpeak);
+  }
+
+  Future<Size> _getImageSize(File file) async {
+    final data = await file.readAsBytes();
+    final codec = await ui.instantiateImageCodec(data);
+    final frame = await codec.getNextFrame();
+    final image = frame.image;
+    final size = Size(image.width.toDouble(), image.height.toDouble());
+    image.dispose();
+    codec.dispose();
+    return size;
   }
 
   void _resetScan() {
