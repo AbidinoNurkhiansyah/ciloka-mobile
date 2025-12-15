@@ -14,7 +14,8 @@ class ScanningBook extends StatefulWidget {
   State<ScanningBook> createState() => _ScanningBookState();
 }
 
-class _ScanningBookState extends State<ScanningBook> {
+class _ScanningBookState extends State<ScanningBook>
+    with WidgetsBindingObserver {
   // Camera State
   CameraController? _cameraController;
   Future<void>? _initializeControllerFuture;
@@ -40,8 +41,28 @@ class _ScanningBookState extends State<ScanningBook> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initTts();
     _initCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // App lifecycle changed (e.g., ImageCropper opened/closed)
+    final CameraController? cameraController = _cameraController;
+
+    // App state changed before we got the controller.
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      // Free up memory when camera not active
+      cameraController.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      // Re-initialize camera on resume
+      _initCamera();
+    }
   }
 
   Future<void> _initCamera() async {
@@ -104,6 +125,7 @@ class _ScanningBookState extends State<ScanningBook> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _textRecognizer.close();
     _flutterTts.stop();
