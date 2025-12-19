@@ -390,7 +390,13 @@ class ClassStudentListView extends StatelessWidget {
                                         color: Colors.blue,
                                       ),
                                       onPressed: () {
-                                        // TODO: Implement Edit
+                                        GlobalNavigator.pushNamed(
+                                          AppRoutes.editStudentTeacher,
+                                          arguments: {
+                                            'student': s,
+                                            'classId': classId,
+                                          },
+                                        );
                                       },
                                     ),
                                     IconButton(

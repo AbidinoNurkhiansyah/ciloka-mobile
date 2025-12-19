@@ -11,6 +11,7 @@ import '../../features/splash_screen.dart';
 import '../../features/student/views/login_student_view.dart';
 import '../../features/student/views/main_student_view.dart';
 import '../../features/teacher/views/add_student_teacher_screen.dart';
+import '../../features/teacher/views/edit_student_teacher_screen.dart';
 
 import '../../features/teacher/views/class_student_list_view.dart';
 
@@ -57,6 +58,11 @@ class RouteGenerator {
       case AppRoutes.addStudentTeacher:
         return MaterialPageRoute(
           builder: (_) => const AddStudentTeacherScreen(),
+          settings: settings,
+        );
+      case AppRoutes.editStudentTeacher:
+        return MaterialPageRoute(
+          builder: (_) => const EditStudentTeacherScreen(),
           settings: settings,
         );
 

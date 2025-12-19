@@ -198,4 +198,64 @@ class StudentListViewmodel extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<bool> updateStudent({
+    required String classId,
+    required String studentId,
+    required String oldNis,
+    required String studentName,
+    required String nis,
+    required String parentName,
+    required String oldPhotoUrl,
+    required BuildContext context,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      String photoUrl = oldPhotoUrl;
+
+      // 1. If new image is picked, upload and potentially delete old
+      final imageFile = profileImage;
+      if (imageFile != null) {
+        // Upload new image
+        final uploadResult = await _imageService.uploadToCloudinary(imageFile);
+        if (uploadResult != null) {
+          photoUrl = uploadResult;
+          // Delete old image if it existed
+          if (oldPhotoUrl.isNotEmpty) {
+            await _imageService.deleteFromCloudinary(oldPhotoUrl);
+          }
+        }
+      }
+
+      // 2. Update in Firestore
+      final updatedStudent = ClassStudentModel(
+        id: studentId,
+        photoUrl: photoUrl,
+        studentName: studentName,
+        nis: nis,
+        parentName: parentName,
+      );
+
+      await _studentFirestore.updateStudent(
+        classId: classId,
+        studentId: studentId,
+        oldNis: oldNis,
+        updatedStudent: updatedStudent,
+      );
+
+      _isLoading = false;
+      profileImage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      if (context.mounted) {
+        GlobalErrorHandler.handle(context, e.toString(), StackTrace.current);
+      }
+      return false;
+    }
+  }
 }

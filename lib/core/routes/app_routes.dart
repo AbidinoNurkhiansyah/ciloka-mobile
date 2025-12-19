@@ -11,6 +11,7 @@ class AppRoutes {
   static const String classDataTeacher = '/class-data-teacher';
   static const String classTeacher = '/class-teacher';
   static const String addStudentTeacher = '/add-student-teacher';
+  static const String editStudentTeacher = '/edit-student-teacher';
 
   // Parent
   static const String loginParent = '/login-parent';

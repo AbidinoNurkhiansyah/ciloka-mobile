@@ -188,4 +188,46 @@ class StudentClassService {
 
     await batch.commit();
   }
+
+  Future<void> updateStudent({
+    required String classId,
+    required String studentId,
+    required String oldNis,
+    required ClassStudentModel updatedStudent,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User belum login');
+    final teacherId = user.uid;
+
+    final WriteBatch batch = _firestore.batch();
+
+    if (oldNis != updatedStudent.nis) {
+      batch.delete(_firestore.collection('student_index').doc(oldNis));
+    }
+
+    batch.set(
+      _firestore.collection('student_index').doc(updatedStudent.nis),
+      {
+        'nis': updatedStudent.nis,
+        'studentName': updatedStudent.studentName,
+        'photoUrl': updatedStudent.photoUrl,
+        'teacherId': teacherId,
+        'classId': classId,
+        'studentId': studentId,
+      },
+      SetOptions(merge: true),
+    );
+
+    batch.update(
+      _teachers
+          .doc(teacherId)
+          .collection('classes')
+          .doc(classId)
+          .collection('students')
+          .doc(studentId),
+      updatedStudent.toMap(),
+    );
+
+    await batch.commit();
+  }
 }
