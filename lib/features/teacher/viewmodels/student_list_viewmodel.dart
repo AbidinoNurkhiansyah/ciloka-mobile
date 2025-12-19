@@ -163,7 +163,36 @@ class StudentListViewmodel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e, stack) {
-      debugPrint('❌ Terjadi kesalahan saat menghapus kelas: $e');
+      debugPrint('❌ Terjadi kesalahan saat menghapus kelas: $e\n$stack');
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteStudent({
+    required String classId,
+    required ClassStudentModel student,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // 1. Delete from Cloudinary if photo exists
+      if (student.photoUrl.isNotEmpty) {
+        await _imageService.deleteFromCloudinary(student.photoUrl);
+      }
+
+      // 2. Delete from Firestore
+      await _studentFirestore.deleteStudent(
+        classId: classId,
+        studentId: student.id,
+        nis: student.nis,
+      );
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
       _isLoading = false;
       notifyListeners();
       rethrow;

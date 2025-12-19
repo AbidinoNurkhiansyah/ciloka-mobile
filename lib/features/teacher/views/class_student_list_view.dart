@@ -303,6 +303,15 @@ class ClassStudentListView extends StatelessWidget {
                               ),
                             ),
                           ),
+                          DataColumn(
+                            label: Text(
+                              'Aksi',
+                              style: textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSecondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                         rows: List.generate(students.length, (index) {
                           final s = students[index];
@@ -369,6 +378,144 @@ class ClassStudentListView extends StatelessWidget {
                                       color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed: () {
+                                        // TODO: Implement Edit
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete,
+                                        color: colorScheme.error,
+                                      ),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                            title: const Text(
+                                              'Hapus Siswa?',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xff1e1e1e),
+                                              ),
+                                            ),
+                                            content: Text(
+                                              'Data siswa ${s.studentName} akan dihapus permanen.',
+                                              style: const TextStyle(
+                                                color: Color(0xff1e1e1e),
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: Text(
+                                                  'Batal',
+                                                  style: TextStyle(
+                                                    color: colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () async {
+                                                  Navigator.pop(context);
+                                                  showDialog(
+                                                    context: context,
+                                                    barrierDismissible: false,
+                                                    builder: (context) =>
+                                                        const Center(
+                                                          child:
+                                                              CircularProgressIndicator(),
+                                                        ),
+                                                  );
+                                                  try {
+                                                    debugPrint(
+                                                      '⏳ Menjalankan deleteStudent...',
+                                                    );
+                                                    await viewModel
+                                                        .deleteStudent(
+                                                          classId: classId,
+                                                          student: s,
+                                                        );
+                                                    debugPrint(
+                                                      '✅ deleteStudent berhasil.',
+                                                    );
+
+                                                    WidgetsBinding.instance.addPostFrameCallback((
+                                                      _,
+                                                    ) async {
+                                                      debugPrint(
+                                                        '🔄 PostFrameCallback (Student): Menutup loading...',
+                                                      );
+                                                      GlobalNavigator.pop(); // Tutup loading dialog
+
+                                                      await Future.delayed(
+                                                        const Duration(
+                                                          milliseconds: 300,
+                                                        ),
+                                                      );
+
+                                                      if (GlobalNavigator
+                                                              .navigatorKey
+                                                              .currentContext !=
+                                                          null) {
+                                                        GlobalSnackBar.showSuccess(
+                                                          GlobalNavigator
+                                                              .navigatorKey
+                                                              .currentContext!,
+                                                          'Siswa berhasil dihapus',
+                                                        );
+                                                      }
+                                                    });
+                                                  } catch (e, stack) {
+                                                    debugPrint(
+                                                      '❌ Error saat hapus student: $e',
+                                                    );
+                                                    WidgetsBinding.instance
+                                                        .addPostFrameCallback((
+                                                          _,
+                                                        ) {
+                                                          debugPrint(
+                                                            '🔄 PostFrameCallback (Student Error): Menutup loading...',
+                                                          );
+                                                          GlobalNavigator.pop(); // Tutup loading dialog
+                                                          GlobalErrorHandler.handle(
+                                                            context,
+                                                            e.toString(),
+                                                            stack,
+                                                          );
+                                                        });
+                                                  }
+                                                },
+                                                child: Text(
+                                                  'Hapus',
+                                                  style: TextStyle(
+                                                    color: colorScheme.error,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

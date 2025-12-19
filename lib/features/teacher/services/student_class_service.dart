@@ -161,4 +161,31 @@ class StudentClassService {
     batch.delete(classRef);
     await batch.commit();
   }
+
+  Future<void> deleteStudent({
+    required String classId,
+    required String studentId,
+    required String nis,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User belum login');
+    final teacherId = user.uid;
+
+    final WriteBatch batch = _firestore.batch();
+
+    // 1. Delete from student_index
+    batch.delete(_firestore.collection('student_index').doc(nis));
+
+    // 2. Delete from teacher's class students sub-collection
+    batch.delete(
+      _teachers
+          .doc(teacherId)
+          .collection('classes')
+          .doc(classId)
+          .collection('students')
+          .doc(studentId),
+    );
+
+    await batch.commit();
+  }
 }
