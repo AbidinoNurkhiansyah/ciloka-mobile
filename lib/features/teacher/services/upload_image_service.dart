@@ -150,7 +150,15 @@ class UploadImageService {
       final segments = uri.pathSegments;
       final index = segments.indexOf('upload');
       if (index != -1 && index + 1 < segments.length) {
-        final fileName = segments.sublist(index + 1).join('/');
+        // Lewati segmen 'upload' dan segmen versi (yang diawali 'v' + angka)
+        final remainingSegments = segments.sublist(index + 1);
+        if (remainingSegments.isNotEmpty &&
+            remainingSegments[0].startsWith('v') &&
+            RegExp(r'^v\d+$').hasMatch(remainingSegments[0])) {
+          remainingSegments.removeAt(0);
+        }
+
+        final fileName = remainingSegments.join('/');
         return fileName.split('.').first;
       }
       return null;

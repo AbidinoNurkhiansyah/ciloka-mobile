@@ -117,4 +117,48 @@ class StudentClassService {
               .toList(),
         );
   }
+
+  Future<List<ClassStudentModel>> getStudentsList(String classId) async {
+    final teacherId = _auth.currentUser?.uid;
+    if (teacherId == null || classId.isEmpty) {
+      return [];
+    }
+    final snapshot = await _teachers
+        .doc(teacherId)
+        .collection('classes')
+        .doc(classId)
+        .collection('students')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => ClassStudentModel.fromFirestore(doc))
+        .toList();
+  }
+
+  Future<void> deleteClass(String classId) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User belum login');
+    final teacherId = user.uid;
+
+    final classRef = _teachers
+        .doc(teacherId)
+        .collection('classes')
+        .doc(classId);
+
+    final studentsRef = classRef.collection('students');
+    final studentsSnapshot = await studentsRef.get();
+
+    final WriteBatch batch = _firestore.batch();
+
+    for (var doc in studentsSnapshot.docs) {
+      final nis = doc.data()['nis'];
+      if (nis != null) {
+        batch.delete(_firestore.collection('student_index').doc(nis));
+      }
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(classRef);
+    await batch.commit();
+  }
 }

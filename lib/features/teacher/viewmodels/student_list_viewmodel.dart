@@ -131,4 +131,42 @@ class StudentListViewmodel extends ChangeNotifier {
       return const Stream.empty();
     }
   }
+
+  Future<void> deleteClass({required String classId}) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      debugPrint('🚀 Memulai penghapusan kelas: $classId');
+
+      // 1. Ambil semua siswa untuk mendapatkan URL foto mereka
+      final students = await _studentFirestore.getStudentsList(classId);
+      debugPrint(
+        '📂 Ditemukan ${students.length} siswa untuk dihapus gambarnya.',
+      );
+
+      // 2. Hapus dari Cloudinary secara PARALEL (lebih cepat)
+      if (students.isNotEmpty) {
+        await Future.wait(
+          students.where((s) => s.photoUrl.isNotEmpty).map((s) {
+            debugPrint('🖼️ Menghapus foto: ${s.photoUrl}');
+            return _imageService.deleteFromCloudinary(s.photoUrl);
+          }),
+        );
+      }
+      debugPrint('✅ Semua foto di Cloudinary telah diproses.');
+
+      // 3. Hapus dari Firestore (Class, Students, StudentIndex)
+      await _studentFirestore.deleteClass(classId);
+      debugPrint('✅ Data Firestore telah dihapus.');
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e, stack) {
+      debugPrint('❌ Terjadi kesalahan saat menghapus kelas: $e');
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

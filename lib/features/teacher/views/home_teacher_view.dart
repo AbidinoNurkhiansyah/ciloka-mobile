@@ -1,3 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../../core/routes/app_routes.dart';
 
 import '../../../core/static/class_color_static.dart';
@@ -65,7 +67,7 @@ class HomeTeacherView extends StatelessWidget {
                         CircleAvatar(
                           radius: 36,
                           backgroundImage: (teacher.photoUrl.isNotEmpty)
-                              ? NetworkImage(teacher.photoUrl)
+                              ? CachedNetworkImageProvider(teacher.photoUrl)
                               : null,
                           child: teacher.photoUrl.isEmpty
                               ? const Icon(Icons.person, size: 36)

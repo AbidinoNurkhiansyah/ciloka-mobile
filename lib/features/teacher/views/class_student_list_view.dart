@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/global_error_handler.dart';
 import '../../../core/utils/global_navigator.dart';
+import '../../../core/utils/global_snackbar.dart';
 import '../models/class_student_model.dart';
 import '../viewmodels/student_list_viewmodel.dart';
 
@@ -43,7 +45,103 @@ class ClassStudentListView extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  title: const Text(
+                    'Hapus Kelas?',
+                    style: TextStyle(
+                      color: Color(0xff1e1e1e),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: const Text(
+                    'Seluruh data siswa dan foto di dalam kelas ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.',
+                    style: TextStyle(color: Color(0xff1e1e1e)),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        // Tutup dialog konfirmasi
+                        Navigator.pop(context);
+
+                        // Tampilkan loading dialog
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) =>
+                              const Center(child: CircularProgressIndicator()),
+                        );
+
+                        try {
+                          debugPrint('⏳ Menjalankan deleteClass...');
+                          await viewModel.deleteClass(classId: classId);
+                          debugPrint('✅ deleteClass berhasil.');
+
+                          WidgetsBinding.instance.addPostFrameCallback((
+                            _,
+                          ) async {
+                            debugPrint(
+                              '🔄 PostFrameCallback: Menutup loading...',
+                            );
+                            GlobalNavigator.pop(); // Tutup loading dialog
+
+                            await Future.delayed(
+                              const Duration(milliseconds: 300),
+                            );
+
+                            if (GlobalNavigator.navigatorKey.currentContext !=
+                                null) {
+                              GlobalSnackBar.showSuccess(
+                                GlobalNavigator.navigatorKey.currentContext!,
+                                'Kelas dan semua data siswa berhasil dihapus',
+                              );
+                            }
+
+                            await Future.delayed(
+                              const Duration(milliseconds: 500),
+                            );
+
+                            debugPrint(
+                              '⬅️ PostFrameCallback: Kembali ke list kelas...',
+                            );
+                            GlobalNavigator.pop(); // Kembali ke home
+                          });
+                        } catch (e, stack) {
+                          debugPrint('❌ Error saat hapus: $e');
+                          if (context.mounted) {
+                            GlobalNavigator.pop();
+                            GlobalErrorHandler.handle(
+                              context,
+                              e.toString(),
+                              stack,
+                            );
+                          }
+                        }
+                      },
+                      child: Text(
+                        'Hapus',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
             icon: Icon(Icons.delete, size: 30, color: colorScheme.error),
           ),
         ],
